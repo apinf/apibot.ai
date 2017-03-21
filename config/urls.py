@@ -8,19 +8,20 @@ from django.contrib import admin
 from django.views.generic import TemplateView
 from django.views import defaults as default_views
 
-urlpatterns = [
-    url(r'^$', TemplateView.as_view(template_name='pages/home.html'), name='home'),
-    url(r'^about/$', TemplateView.as_view(template_name='pages/about.html'), name='about'),
+api_patterns = [
+    url(r'^apis/', include('apinf_bot.apis.urls')),
 
+]
+
+urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
     url(settings.ADMIN_URL, admin.site.urls),
 
     # User management
-    url(r'^users/', include('apinf_bot.users.urls', namespace='users')),
     url(r'^accounts/', include('allauth.urls')),
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
-    # Your stuff: custom urls includes go here
-
+    url(r'^api/v1/', include(api_patterns)),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

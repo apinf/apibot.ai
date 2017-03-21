@@ -19,7 +19,7 @@ APPS_DIR = ROOT_DIR.path('apinf_bot')
 env = environ.Env()
 
 # .env file, should load only in development environment
-READ_DOT_ENV_FILE = env.bool('DJANGO_READ_DOT_ENV_FILE', default=False)
+READ_DOT_ENV_FILE = env.bool('DJANGO_READ_DOT_ENV_FILE', default=True)
 
 if READ_DOT_ENV_FILE:
     # Operating System Environment variables have precedence over variables defined in the .env file,
@@ -48,17 +48,24 @@ DJANGO_APPS = [
     'django.contrib.admin',
 ]
 THIRD_PARTY_APPS = [
-    'crispy_forms',  # Form layouts
+    # 'crispy_forms',  # Form layouts
     'allauth',  # registration
     'allauth.account',  # registration
     'allauth.socialaccount',  # registration
+
+    # REST
+    'rest_framework',
+    'rest_framework.authtoken',
+    # 'rest_auth',
+    # 'rest_auth.registration',
 ]
 
 # Apps specific for this project go here.
 LOCAL_APPS = [
     # custom users app
-    'apinf_bot.users.apps.UsersConfig',
+    # 'apinf_bot.users.apps.UsersConfig',
     # Your stuff: custom apps go here
+    'apinf_bot.apis',
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -112,7 +119,7 @@ MANAGERS = ADMINS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgres:///apinf_bot'),
+    'default': env.db('DJANGO_DATABASE_URL', default='postgres:///apinf_bot'),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
@@ -177,7 +184,7 @@ TEMPLATES = [
 ]
 
 # See: http://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+# CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # STATIC FILE CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -251,26 +258,44 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Some really nice defaults
-ACCOUNT_AUTHENTICATION_METHOD = 'username'
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 ACCOUNT_ALLOW_REGISTRATION = env.bool('DJANGO_ACCOUNT_ALLOW_REGISTRATION', True)
-ACCOUNT_ADAPTER = 'apinf_bot.users.adapters.AccountAdapter'
-SOCIALACCOUNT_ADAPTER = 'apinf_bot.users.adapters.SocialAccountAdapter'
+# ACCOUNT_ADAPTER = 'apinf_bot.users.adapters.AccountAdapter'
+# SOCIALACCOUNT_ADAPTER = 'apinf_bot.users.adapters.SocialAccountAdapter'
 
 # Custom user app defaults
 # Select the correct user model
-AUTH_USER_MODEL = 'users.User'
-LOGIN_REDIRECT_URL = 'users:redirect'
+# AUTH_USER_MODEL = 'users.User'
+# LOGIN_REDIRECT_URL = 'users:redirect'
 LOGIN_URL = 'account_login'
-
-# SLUGLIFIER
-AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'
-
 
 # Location of root django.contrib.admin URL, use {% url 'admin:index' %}
 ADMIN_URL = r'^admin/'
 
 # Your common stuff: Below this line define 3rd party library settings
 # ------------------------------------------------------------------------------
+# REST API
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # 'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+        # 'rest_framework_json_api.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+    ),
+    # 'DEFAULT_RENDERER_CLASSES': (
+    #     'rest_framework_json_api.renderers.JSONRenderer',
+    #     'rest_framework.renderers.BrowsableAPIRenderer',
+    # ),
+}
+
+# REST_AUTH_SERIALIZERS = {
+#     'USER_DETAILS_SERIALIZER': 'apps.users.serializers.UserDetailsSerializer',
+#     # 'PASSWORD_RESET_SERIALIZER': 'apps.users.serializers.PasswordResetSerializer',
+# }

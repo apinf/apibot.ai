@@ -48,3 +48,9 @@ redis>=2.10.5
 
 
 # Your custom requirements go here
+
+# REST api
+djangorestframework==3.6.2
+
+# Swagger
+swagger-parser==0.1.11
