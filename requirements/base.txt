@@ -54,3 +54,6 @@ djangorestframework==3.6.2
 
 # Swagger
 swagger-parser==0.1.11
+
+# Utility
+django-extensions==1.7.6
