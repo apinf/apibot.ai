@@ -5,7 +5,14 @@ from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework.routers import DefaultRouter
 
-from .restviews import SwaggerViewSet
+from .restviews import SwaggerViewSet, BotView
+
+
+urlpatterns = [
+    url(r'^bot/$', BotView.as_view()),
+]
+
+urlpatterns = format_suffix_patterns(urlpatterns)
 
 
 # Create a router and register our viewsets with it.
@@ -13,9 +20,10 @@ router = DefaultRouter()
 router.register(r'^apis', SwaggerViewSet)
 
 
-urlpatterns = [
+urlpatterns += [
     url(r'^', include(router.urls)),
 ]
+
 
 
 

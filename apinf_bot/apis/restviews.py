@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from swagger_parser import SwaggerParser
 
 from .models import Swagger
-from .serializers import SwaggerSerializer
+from .serializers import SwaggerSerializer, BotSerializer
 
 
 class SwaggerViewSet(ModelViewSet):
@@ -56,3 +56,23 @@ class SwaggerViewSet(ModelViewSet):
 
 
         return Response(data)
+
+
+class BotView(APIView):
+    """
+    An endpoint that gives you the correct piece of information
+    contained within a Swagger file.
+
+    Only accepts POST requests.
+
+    The endpoint is built for the api.ai platform:
+    * https://docs.api.ai/docs/query#post-query
+    * https://docs.api.ai/docs/webhook#webhook-example
+    """
+    def post(self, request, format=None):
+        serializer = BotSerializer(data=request.data)
+        import pdb; pdb.set_trace()
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
