@@ -42,7 +42,6 @@ class BotView(APIView):
     """
     def post(self, request, format=None):
         serializer = BotSerializer(data=request.data)
-        import pdb; pdb.set_trace()
 
         if serializer.is_valid():
             queryset = Swagger.objects.all()
@@ -77,9 +76,9 @@ class BotView(APIView):
 
             except:
                 data['displayText'] = 'Arrr! Here ye all be warned, for pirates are lurking...'
-            print(data)
+
+            data['speech'] = data['displayText']
             serializer = BotResponseSerializer(data)
-        # if serializer.is_valid():
             return Response(serializer.data, status=HTTP_200_OK)
         else:
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
