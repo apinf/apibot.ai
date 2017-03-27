@@ -30,11 +30,13 @@ class SwaggerSerializer(ModelSerializer):
         )
 
 
+# Incoming requests
 class BotParametersSerializer(Serializer):
-    api = CharField(max_length=100)
-    intent = CharField(allow_blank=True, max_length=100)
-    data = CharField(allow_blank=True, max_length=100)
-    method = CharField(allow_blank=True, max_length=10)
+    api = CharField(required=False, allow_blank=True, max_length=100)
+    intent = CharField(required=False, allow_blank=True, max_length=100)
+    data = CharField(max_length=100)
+    method = CharField(required=False, allow_blank=True, max_length=10)
+    endpoint = CharField(required=False, allow_blank=True, max_length=100)
 
 
 class BotResultSerializer(Serializer):
@@ -50,7 +52,7 @@ class BotResultSerializer(Serializer):
     # speech = CharField(max_length=100)
     # fulfillment = CharField(max_length=100)
     # actionIncomplete = CharField(max_length=100)
-    action = CharField(allow_blank=True, max_length=100)
+    action = CharField(required=False, allow_blank=True, max_length=100)
     # metadata = CharField(max_length=100)
 
 
@@ -65,8 +67,9 @@ class BotSerializer(Serializer):
     result = BotResultSerializer()
 
 
+# Outgoing requests
 class ContextOutSerializer(Serializer):
-    name = CharField(allow_blank=True, max_length=100)
+    name = CharField(required=False, max_length=100)
     lifespan = IntegerField()
     parameters = DictField(
         child=CharField(),
@@ -77,7 +80,7 @@ class BotResponseSerializer(Serializer):
     speech = CharField()
     displayText = CharField()
     data = DictField(
-        child=CharField(allow_blank=True),
+        child=CharField(required=False),
         required=False,
     )
     contextOut = ContextOutSerializer(required=False)

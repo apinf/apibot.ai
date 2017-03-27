@@ -42,43 +42,53 @@ class BotView(APIView):
     """
     def post(self, request, format=None):
         serializer = BotSerializer(data=request.data)
+        output_data = {}
+
+        # All the APIs
+        queryset = Swagger.objects.all()
 
         if serializer.is_valid():
-            queryset = Swagger.objects.all()
-            swagger = get_object_or_404(queryset, name=serializer.validated_data['result']['parameters']['api'])
+            # Check what type of data we need to return
+            # List all APIs
+            if serializer.validated_data['result']['parameters']['data'] == 'list':
+                api_list = queryset.values_list('name', flat=True).order_by('name')
+                output_data['displayText'] = ', '.join(api_list)
 
-            # Load the Swagger file from remote location
-            swaggerfile = requests.get(swagger.swaggerfile)
-            #  Parse the Swagger file
-            parser = SwaggerParser(swagger_dict=swaggerfile.json())
+            # Information about specific API
+            else:
+                swagger = get_object_or_404(queryset, name=serializer.validated_data['result']['parameters']['api'])
 
-            data = {}
-            try:
-                json_specification = json.loads(parser.json_specification)
-                data['displayText'] = json_specification['info'][str(serializer.validated_data['result']['parameters']['data'])]
-                # # JSON specifications are all in a string that contains JSON
-                # # We need to slice up every piece of data
-                # # TODO:
-                # # We can probably make this generic
-                # if serializer.data == 'description':
-                #     json_specification = json.loads(parser.json_specification)
-                #     data['description'] = json_specification['info']['description']
-                # elif('title' in request.query_params['data']):
-                #     json_specification = json.loads(parser.json_specification)
-                #     data['title'] = json_specification['info']['title']
-                # elif('terms-of-service' in request.query_params['data']):
-                #     json_specification = json.loads(parser.json_specification)
-                #     data['terms-of-service'] = json_specification['info']['termsOfService']
-                # elif('contact' in request.query_params['data']):
-                #     json_specification = json.loads(parser.json_specification)
-                #     data['contact'] = json_specification['info']['contact']
-                # else:
+                # Load the Swagger file from remote location
+                swaggerfile = requests.get(swagger.swaggerfile)
+                #  Parse the Swagger file
+                parser = SwaggerParser(swagger_dict=swaggerfile.json())
 
-            except:
-                data['displayText'] = 'Arrr! Here ye all be warned, for pirates are lurking...'
+                try:
+                    json_specification = json.loads(parser.json_specification)
+                    output_data['displayText'] = json_specification['info'][str(serializer.validated_data['result']['parameters']['data'])]
+                    # # JSON specifications are all in a string that contains JSON
+                    # # We need to slice up every piece of data
+                    # # TODO:
+                    # # We can probably make this generic
+                    # if serializer.data == 'description':
+                    #     json_specification = json.loads(parser.json_specification)
+                    #     data['description'] = json_specification['info']['description']
+                    # elif('title' in request.query_params['data']):
+                    #     json_specification = json.loads(parser.json_specification)
+                    #     data['title'] = json_specification['info']['title']
+                    # elif('terms-of-service' in request.query_params['data']):
+                    #     json_specification = json.loads(parser.json_specification)
+                    #     data['terms-of-service'] = json_specification['info']['termsOfService']
+                    # elif('contact' in request.query_params['data']):
+                    #     json_specification = json.loads(parser.json_specification)
+                    #     data['contact'] = json_specification['info']['contact']
+                    # else:
 
-            data['speech'] = data['displayText']
-            serializer = BotResponseSerializer(data)
+                except:
+                    output_data['displayText'] = 'Arrr! Here ye all be warned, for pirates are lurking...'
+
+            output_data['speech'] = output_data['displayText']
+            serializer = BotResponseSerializer(output_data)
             return Response(serializer.data, status=HTTP_200_OK)
         else:
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
