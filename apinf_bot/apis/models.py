@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import requests
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
+from swagger_parser import SwaggerParser
 
 
 class Swagger(TimeStampedModel):
@@ -21,3 +23,10 @@ class Swagger(TimeStampedModel):
     name = models.CharField(
         max_length=100,
     )
+
+    def parse_swaggerfile(self):
+        # Load the Swagger file from remote location
+        swaggerfile = requests.get(self.swaggerfile)
+        #  Parse the Swagger file
+        parser = SwaggerParser(swagger_dict=swaggerfile.json())
+        return parser

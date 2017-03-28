@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
-import requests
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
@@ -11,7 +10,6 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
-from swagger_parser import SwaggerParser
 from swagger_spec_validator import validate_spec_url
 
 from .models import Swagger
@@ -19,6 +17,10 @@ from .serializers import (
     SwaggerSerializer,
     BotSerializer,
     BotResponseSerializer,
+)
+from .lists import (
+    info_fields,
+    swagger_fields,
 )
 
 
@@ -43,6 +45,10 @@ class BotView(APIView):
     * https://docs.api.ai/docs/webhook#webhook-example
     """
     def post(self, request, format=None):
+        generic_error_msg = 'Arrr! Here ye all be warned, for pirates are lurking...'
+        not_existing_msg = 'This information is not defined in the Swagger file. Sorry!'
+        not_defined_msg = 'This data is not part of the OpenAPI specifications: https://github.com/OAI/OpenAPI-Specification'
+
         serializer = BotSerializer(data=request.data)
         output_data = {}
 
@@ -75,6 +81,7 @@ class BotView(APIView):
                             # Validate the JSON file. Will throw an exception
                             # if the file is not valid
                             validate_spec_url(parameters['url'])
+                            # Create new API
                             Swagger.objects.create(
                                 name=parameters['api'],
                                 swaggerfile=parameters['url'],
@@ -86,23 +93,34 @@ class BotView(APIView):
                     output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
             # Information about specific API
-            elif parameters['api']:
+            elif metadata['intentName'] == 'api-info':
                 swagger = get_object_or_404(queryset, name=parameters['api'])
-                # Load the Swagger file from remote location
-                swaggerfile = requests.get(swagger.swaggerfile)
                 #  Parse the Swagger file
-                parser = SwaggerParser(swagger_dict=swaggerfile.json())
+                parser = swagger.parse_swaggerfile()
 
                 # Do we have a request for generic information of this API?
-                if parameters['data'] in ('contact', 'description', 'version', 'title', 'termsOfService', 'license'):
+                if parameters['data'] in info_fields:
                     try:
                         json_specification = json.loads(parser.json_specification)
-                        output_data['displayText'] = json_specification['info'][str(parameters['data'])]
+                        output_data['displayText'] = json_specification['info'][parameters['data']]
                     except:
-                        output_data['displayText'] = 'Arrr! Here ye all be warned, for pirates are lurking...'
-                if parameters['data'] in ('host', 'basePath', ):
-                    import pdb; pdb.set_trace()
-                    pass
+                        output_data['displayText'] = not_existing_msg
+
+                # Do we have Swagger object fields?
+                elif parameters['data'] in swagger_fields:
+                    try:
+                        json_specification = json.loads(parser.json_specification)
+                        output_data['displayText'] = json_specification[parameters['data']]
+                    except:
+                        output_data['displayText'] = not_existing_msg
+
+
+
+                else:
+                    output_data['displayText'] = not_defined_msg
+
+            else:
+                output_data['displayText'] = not_defined_msg
 
             output_data['speech'] = output_data['displayText']
             serializer = BotResponseSerializer(output_data)
