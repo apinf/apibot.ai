@@ -7,6 +7,7 @@ from rest_framework.serializers import (
     CharField,
     IntegerField,
     URLField,
+    BooleanField,
     ListField,
     DictField,
 )
@@ -41,6 +42,13 @@ class BotParametersSerializer(Serializer):
     url = URLField(required=False, allow_blank=True, max_length=255)
 
 
+class BotMetadataSerializer(Serializer):
+    intentId = CharField(required=False, allow_blank=True, max_length=100)
+    webhookUsed = BooleanField(required=False)
+    webhookForSlotFillingUsed = BooleanField(required=False)
+    intentName = CharField(required=False, allow_blank=True, max_length=10)
+
+
 class BotResultSerializer(Serializer):
     parameters = BotParametersSerializer()
     # contexts = ListField(
@@ -55,7 +63,7 @@ class BotResultSerializer(Serializer):
     # fulfillment = CharField(max_length=100)
     # actionIncomplete = CharField(max_length=100)
     action = CharField(required=False, allow_blank=True, max_length=100)
-    # metadata = CharField(max_length=100)
+    metadata = BotMetadataSerializer(required=False)
 
 
 class BotSerializer(Serializer):

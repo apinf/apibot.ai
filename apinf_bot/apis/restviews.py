@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from swagger_parser import SwaggerParser
+from swagger_spec_validator import validate_spec_url
 
 from .models import Swagger
 from .serializers import (
@@ -49,15 +50,16 @@ class BotView(APIView):
             # All the APIs
             queryset = Swagger.objects.all()
             parameters = serializer.validated_data['result']['parameters']
+            metadata = serializer.validated_data['result']['metadata']
 
             # Check what type of data we need to return
             # List all APIs
-            if  parameters['data'] == 'list':
+            if  metadata['intentName'] == 'api-list':
                 api_list = queryset.values_list('name', flat=True).order_by('name')
                 output_data['displayText'] = _('We have these APIs:\n "{0}"\n Just tell me if you want to add some more.').format('\n'.join(api_list))
 
             # Add a new API
-            elif parameters['data'] == 'create':
+            elif metadata['intentName'] == 'api-create':
                 # Check for existing APIs first
                 try:
                     # API with same name exists
@@ -68,11 +70,18 @@ class BotView(APIView):
                         output_data['displayText'] = _('An API pointing to this URL already exists!')
                     # Create new API
                     else:
-                        Swagger.objects.create(
-                            name=parameters['api'],
-                            swaggerfile=parameters['url'],
-                        )
-                        output_data['displayText'] = _('New API added, thanks!')
+                        # Validate the URL that it is a Swagger 2.0 file
+                        try:
+                            # Validate the JSON file. Will throw an exception
+                            # if the file is not valid
+                            validate_spec_url(parameters['url'])
+                            Swagger.objects.create(
+                                name=parameters['api'],
+                                swaggerfile=parameters['url'],
+                            )
+                            output_data['displayText'] = _('New API added, thanks!')
+                        except:
+                            output_data['displayText'] = _('The URL does not point to a valid Swagger 2.0 file.')
                 except KeyError:
                     output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
