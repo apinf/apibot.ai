@@ -56,7 +56,7 @@ class BotResultSerializer(Serializer):
     #     required=False,
     #     # allow_null=True,
     # )
-    resolvedQuery = CharField(max_length=100)
+    resolvedQuery = CharField(max_length=1000)
     source = CharField(max_length=100)
     # score = CharField(max_length=100)
     # speech = CharField(max_length=100)
