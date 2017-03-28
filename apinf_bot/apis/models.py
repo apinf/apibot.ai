@@ -2,8 +2,8 @@
 from __future__ import absolute_import, unicode_literals
 
 from django.db import models
-from django_extensions.db.models import TimeStampedModel
-from slugify import UniqueSlugify
+from django.utils.translation import ugettext_lazy as _
+from model_utils.models import TimeStampedModel
 
 
 class Swagger(TimeStampedModel):
@@ -15,7 +15,7 @@ class Swagger(TimeStampedModel):
         return self.name
 
     swaggerfile = models.URLField(
-        'Swagger file URL',
+        _('Swagger file URL'),
         max_length=200,
     )
     name = models.CharField(
