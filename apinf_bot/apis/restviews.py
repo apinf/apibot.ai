@@ -62,7 +62,7 @@ class BotView(APIView):
             # List all APIs
             if  metadata['intentName'] == 'api-list':
                 api_list = queryset.values_list('name', flat=True).order_by('name')
-                output_data['displayText'] = _('We have these APIs:\n "{0}"\n Just tell me if you want to add some more.').format('\n'.join(api_list))
+                output_data['displayText'] = _('We have these APIs:\n{0}\n Just tell me if you want to add some more.').format('\n'.join(api_list))
 
             # Add a new API
             elif metadata['intentName'] == 'api-create':
