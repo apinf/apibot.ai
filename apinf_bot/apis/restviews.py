@@ -20,6 +20,7 @@ from .serializers import (
 )
 from .lists import (
     info_fields,
+    general_data,
     swagger_fields,
 )
 
@@ -114,10 +115,23 @@ class BotView(APIView):
                     except:
                         output_data['displayText'] = not_existing_msg
 
+                # Some general data about the API
+                elif parameters['data'] in general_data:
+                    if parameters['data'] == 'paths':
+                        paths = parser.paths.keys()
+                        output_data['displayText'] = '\n'.join(paths)
 
 
                 else:
                     output_data['displayText'] = not_defined_msg
+
+            elif metadata['intentName'] == 'api-endpoint':
+                swagger = get_object_or_404(queryset, name=parameters['api'])
+                #  Parse the Swagger file
+                parser = swagger.parse_swaggerfile()
+
+                import pdb; pdb.set_trace()
+                pass
 
             else:
                 output_data['displayText'] = not_defined_msg

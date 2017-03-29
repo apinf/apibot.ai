@@ -46,7 +46,7 @@ class BotMetadataSerializer(Serializer):
     intentId = CharField(required=False, allow_blank=True, max_length=100)
     webhookUsed = BooleanField(required=False)
     webhookForSlotFillingUsed = BooleanField(required=False)
-    intentName = CharField(required=False, allow_blank=True, max_length=10)
+    intentName = CharField(required=False, allow_blank=True, max_length=100)
 
 
 class BotResultSerializer(Serializer):
