@@ -98,7 +98,7 @@ class BotView(APIView):
                 swagger = get_object_or_404(queryset, name=parameters['api'])
                 #  Parse the Swagger file
                 parser = swagger.parse_swaggerfile()
-
+                import pdb; pdb.set_trace()
                 # Do we have a request for generic information of this API?
                 if parameters['data'] in info_fields:
                     try:
@@ -117,10 +117,20 @@ class BotView(APIView):
 
                 # Some general data about the API
                 elif parameters['data'] in general_data:
+                    # List all the paths
                     if parameters['data'] == 'paths':
                         paths = parser.paths.keys()
                         output_data['displayText'] = '\n'.join(paths)
 
+                    # List all the operations
+                    elif parameters['data'] == 'operations':
+                        operations = parser.operation.keys()
+                        output_data['displayText'] = '\n'.join(operations)
+
+                    # List all the objects
+                    elif parameters['data'] == 'definitions':
+                        definitions = parser.definitions_example.keys()
+                        output_data['displayText'] = '\n'.join(definitions)
 
                 else:
                     output_data['displayText'] = not_defined_msg
