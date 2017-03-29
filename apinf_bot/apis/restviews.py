@@ -98,7 +98,7 @@ class BotView(APIView):
                 swagger = get_object_or_404(queryset, name=parameters['api'])
                 #  Parse the Swagger file
                 parser = swagger.parse_swaggerfile()
-                import pdb; pdb.set_trace()
+
                 # Do we have a request for generic information of this API?
                 if parameters['data'] in info_fields:
                     try:
@@ -139,8 +139,6 @@ class BotView(APIView):
                 swagger = get_object_or_404(queryset, name=parameters['api'])
                 #  Parse the Swagger file
                 parser = swagger.parse_swaggerfile()
-
-                import pdb; pdb.set_trace()
                 pass
 
             else:
