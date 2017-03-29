@@ -37,6 +37,7 @@ class BotParametersSerializer(Serializer):
     api = CharField(required=False, allow_blank=True, max_length=100)
     object = CharField(required=False, allow_blank=True, max_length=100)
     operation = CharField(required=False, allow_blank=True, max_length=100)
+    path = CharField(required=False, allow_blank=True, max_length=255)
     data = CharField(required=False, allow_blank=True, max_length=100)
     method = CharField(required=False, allow_blank=True, max_length=10)
     endpoint = CharField(required=False, allow_blank=True, max_length=100)
