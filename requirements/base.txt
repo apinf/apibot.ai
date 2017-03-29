@@ -53,7 +53,7 @@ redis>=2.10.5
 djangorestframework==3.6.2
 
 # Swagger
-swagger-parser==0.1.11
+#swagger-parser==0.1.11
+-e git+https://github.com/philippeluickx/swagger-parser.git@422f949b04c952ae582ce6c8fc8b229337d04827#egg=swagger-parser
 
 # Utility
-django-extensions==1.7.6

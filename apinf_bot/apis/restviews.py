@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import json
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
@@ -46,9 +45,11 @@ class BotView(APIView):
     * https://docs.api.ai/docs/webhook#webhook-example
     """
     def post(self, request, format=None):
-        generic_error_msg = 'Arrr! Here ye all be warned, for pirates are lurking...'
-        not_existing_msg = 'This information is not defined in the Swagger file. Sorry!'
-        not_defined_msg = 'This data is not part of the OpenAPI specifications: https://github.com/OAI/OpenAPI-Specification'
+        import pdb; pdb.set_trace()
+        generic_error_msg = _('Arrr! Here ye all be warned, for pirates are lurking...')
+        not_existing_msg = _('This information is not defined in the Swagger file. Sorry!')
+        not_defined_msg = _('This data is not part of the OpenAPI specifications: https://github.com/OAI/OpenAPI-Specification')
+        no_api_msg = _('We do not have information about this API. Feel free to add it yourself!')
 
         serializer = BotSerializer(data=request.data)
         output_data = {}
@@ -88,62 +89,72 @@ class BotView(APIView):
                                 swaggerfile=parameters['url'],
                             )
                             output_data['displayText'] = _('New API added, thanks!')
-                        except:
+                        except Exception:
                             output_data['displayText'] = _('The URL does not point to a valid Swagger 2.0 file.')
                 except KeyError:
                     output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
             # Information about specific API
             elif metadata['intentName'] == 'api-info':
-                swagger = get_object_or_404(queryset, name=parameters['api'])
-                #  Parse the Swagger file
-                parser = swagger.parse_swaggerfile()
+                try:
+                    swagger = queryset.get(name__icontains=parameters['api'])
 
-                # Do we have a request for generic information of this API?
-                if parameters['data'] in info_fields:
-                    try:
-                        json_specification = json.loads(parser.json_specification)
-                        output_data['displayText'] = json_specification['info'][parameters['data']]
-                    except:
-                        output_data['displayText'] = not_existing_msg
+                    #  Parse the Swagger file
+                    parser = swagger.parse_swaggerfile()
 
-                # Do we have Swagger object fields?
-                elif parameters['data'] in swagger_fields:
-                    try:
-                        json_specification = json.loads(parser.json_specification)
-                        output_data['displayText'] = json_specification[parameters['data']]
-                    except:
-                        output_data['displayText'] = not_existing_msg
+                    # Do we have a request for generic information of this API?
+                    if parameters['data'] in info_fields:
+                        try:
+                            output_data['displayText'] = parser.specification['info'][parameters['data']]
+                        except:
+                            output_data['displayText'] = not_existing_msg
 
-                # Some general data about the API
-                elif parameters['data'] in general_data:
-                    # List all the paths
-                    if parameters['data'] == 'paths':
-                        paths = parser.paths.keys()
-                        output_data['displayText'] = '\n'.join(paths)
+                    # Do we have Swagger object fields?
+                    elif parameters['data'] in swagger_fields:
+                        try:
+                            output_data['displayText'] = parser.specification[parameters['data']]
+                        except:
+                            output_data['displayText'] = not_existing_msg
 
-                    # List all the operations
-                    elif parameters['data'] == 'operations':
-                        operations = parser.operation.keys()
-                        output_data['displayText'] = '\n'.join(operations)
+                    # Some general data about the API
+                    elif parameters['data'] in general_data:
+                        # List all the paths
+                        if parameters['data'] == 'paths':
+                            paths = parser.paths.keys()
+                            output_data['displayText'] = '\n'.join(paths)
 
-                    # List all the objects
-                    elif parameters['data'] == 'definitions':
-                        definitions = parser.definitions_example.keys()
-                        output_data['displayText'] = '\n'.join(definitions)
+                        # List all the operations
+                        elif parameters['data'] == 'operations':
+                            operations = parser.operation.keys()
+                            output_data['displayText'] = '\n'.join(operations)
 
-                else:
-                    output_data['displayText'] = not_defined_msg
+                        # List all the objects
+                        elif parameters['data'] == 'definitions':
+                            definitions = parser.definitions_example.keys()
+                            output_data['displayText'] = '\n'.join(definitions)
+
+                    else:
+                        output_data['displayText'] = not_defined_msg
+
+                except ObjectDoesNotExist:
+                    output_data['displayText'] = no_api_msg
+
 
             elif metadata['intentName'] == 'api-endpoint':
-                swagger = get_object_or_404(queryset, name=parameters['api'])
-                #  Parse the Swagger file
-                parser = swagger.parse_swaggerfile()
-                pass
+                try:
+                    swagger = queryset.get(name__icontains=parameters['api'])
+                    #  Parse the Swagger file
+                    parser = swagger.parse_swaggerfile()
+                    pass
 
+                except ObjectDoesNotExist:
+                    output_data['displayText'] = no_api_msg
+
+            # We have no idea what this intent is...
             else:
                 output_data['displayText'] = not_defined_msg
 
+            # For now duplicate the display text and speech
             output_data['speech'] = output_data['displayText']
             serializer = BotResponseSerializer(output_data)
             return Response(serializer.data, status=HTTP_200_OK)
