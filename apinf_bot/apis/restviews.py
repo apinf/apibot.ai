@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import pprint
+
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
+
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
-
 from swagger_spec_validator import validate_spec_url
 
 from .models import Swagger
@@ -45,7 +48,6 @@ class BotView(APIView):
     * https://docs.api.ai/docs/webhook#webhook-example
     """
     def post(self, request, format=None):
-        import pdb; pdb.set_trace()
         generic_error_msg = _('Arrr! Here ye all be warned, for pirates are lurking...')
         not_existing_msg = _('This information is not defined in the Swagger file. Sorry!')
         not_defined_msg = _('This data is not part of the OpenAPI specifications: https://github.com/OAI/OpenAPI-Specification')
@@ -139,6 +141,19 @@ class BotView(APIView):
                 except ObjectDoesNotExist:
                     output_data['displayText'] = no_api_msg
 
+            elif metadata['intentName'] == 'api-object-definition':
+                try:
+                    swagger = queryset.get(name__icontains=parameters['api'])
+                    #  Parse the Swagger file
+                    parser = swagger.parse_swaggerfile()
+                    try:
+                        import pdb; pdb.set_trace()
+                        output_data['displayText'] = pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1)
+                    except KeyError:
+                        output_data['displayText'] = not_defined_msg
+
+                except ObjectDoesNotExist:
+                    output_data['displayText'] = no_api_msg
 
             elif metadata['intentName'] == 'api-endpoint':
                 try:

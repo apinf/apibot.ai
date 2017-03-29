@@ -35,7 +35,7 @@ class SwaggerSerializer(ModelSerializer):
 # Incoming requests
 class BotParametersSerializer(Serializer):
     api = CharField(required=False, allow_blank=True, max_length=100)
-    intent = CharField(required=False, allow_blank=True, max_length=100)
+    object = CharField(required=False, allow_blank=True, max_length=100)
     data = CharField(required=False, allow_blank=True, max_length=100)
     method = CharField(required=False, allow_blank=True, max_length=10)
     endpoint = CharField(required=False, allow_blank=True, max_length=100)
