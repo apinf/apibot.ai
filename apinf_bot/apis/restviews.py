@@ -147,8 +147,20 @@ class BotView(APIView):
                     #  Parse the Swagger file
                     parser = swagger.parse_swaggerfile()
                     try:
-                        import pdb; pdb.set_trace()
                         output_data['displayText'] = pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1)
+                    except KeyError:
+                        output_data['displayText'] = not_defined_msg
+
+                except ObjectDoesNotExist:
+                    output_data['displayText'] = no_api_msg
+
+            elif metadata['intentName'] == 'api-operation':
+                try:
+                    swagger = queryset.get(name__icontains=parameters['api'])
+                    #  Parse the Swagger file
+                    parser = swagger.parse_swaggerfile()
+                    try:
+                        output_data['displayText'] = pprint.pformat(parser.operation[parameters['operation']], indent=4, width=1)
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
 
