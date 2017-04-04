@@ -35,6 +35,7 @@ class SwaggerSerializer(ModelSerializer):
 # Incoming requests
 class BotParametersSerializer(Serializer):
     api = CharField(required=False, allow_blank=True, max_length=100)
+    api = CharField(required=False, allow_blank=True, max_length=100)
     object = CharField(required=False, allow_blank=True, max_length=100)
     operation = CharField(required=False, allow_blank=True, max_length=100)
     path = CharField(required=False, allow_blank=True, max_length=255)
@@ -51,13 +52,18 @@ class BotMetadataSerializer(Serializer):
     intentName = CharField(required=False, allow_blank=True, max_length=100)
 
 
+class BotContextsSerializer(Serializer):
+    name = CharField(required=False, allow_blank=True, max_length=100)
+    parameters = BotParametersSerializer()
+    lifespan = IntegerField(required=False)
+
+
 class BotResultSerializer(Serializer):
     parameters = BotParametersSerializer()
-    # contexts = ListField(
-    #     child=CharField(allow_blank=True, max_length=100),
-    #     required=False,
-    #     # allow_null=True,
-    # )
+    contexts = ListField(
+        child=BotContextsSerializer(),
+        required=False,
+    )
     resolvedQuery = CharField(max_length=1000)
     source = CharField(max_length=100)
     # score = CharField(max_length=100)

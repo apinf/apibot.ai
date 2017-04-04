@@ -47,6 +47,18 @@ class BotView(APIView):
     * https://docs.api.ai/docs/query#post-query
     * https://docs.api.ai/docs/webhook#webhook-example
     """
+    def get_parser(parameters, contexts):
+        """
+        We might be getting the API name from paramaters straight or
+        from passed context
+        """
+        if 'api' in parameters:
+            api = parameters['api']
+        elif contexts and 'api' in contexts[0]['parameters']:
+            api = contexts[0]['parameters']['api']
+        swagger = queryset.get(name__icontains=api)
+        return swagger.parse_swaggerfile()
+
     def post(self, request, format=None):
         generic_error_msg = _('Arrr! Here ye all be warned, for pirates are lurking...')
         not_existing_msg = _('This information is not defined in the Swagger file. Sorry!')
@@ -60,16 +72,20 @@ class BotView(APIView):
             # All the APIs
             queryset = Swagger.objects.all()
             parameters = serializer.validated_data['result']['parameters']
+            contexts = serializer.validated_data['result']['contexts']
             metadata = serializer.validated_data['result']['metadata']
+            action = serializer.validated_data['result']['action']
 
             # Check what type of data we need to return
             # List all APIs
-            if  metadata['intentName'] == 'api-list':
+            ###############
+            if  action == 'api.list':
                 api_list = queryset.values_list('name', flat=True).order_by('name')
                 output_data['displayText'] = _('We have these APIs:\n{0}\n Just tell me if you want to add some more.').format('\n'.join(api_list))
 
             # Add a new API
-            elif metadata['intentName'] == 'api-create':
+            ###############
+            elif action == 'api.create':
                 # Check for existing APIs first
                 try:
                     # API with same name exists
@@ -97,13 +113,10 @@ class BotView(APIView):
                     output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
             # Information about specific API
-            elif metadata['intentName'] == 'api-info':
+            ################################
+            elif action == 'api.info':
                 try:
-                    swagger = queryset.get(name__icontains=parameters['api'])
-
-                    #  Parse the Swagger file
-                    parser = swagger.parse_swaggerfile()
-
+                    parser = self.get_parser(parameters, context)
                     # Do we have a request for generic information of this API?
                     if parameters['data'] in info_fields:
                         try:
@@ -135,17 +148,21 @@ class BotView(APIView):
                             definitions = parser.definitions_example.keys()
                             output_data['displayText'] = '\n'.join(definitions)
 
+                    # No idea what they want...
+                    # TODO: start logging these so we can analyze
                     else:
                         output_data['displayText'] = not_defined_msg
 
                 except ObjectDoesNotExist:
                     output_data['displayText'] = no_api_msg
+                except Exception:
+                    output_data['displayText'] = generic_error_msg
 
-            elif metadata['intentName'] == 'api-object-definition':
+            # Object definitions for specific API
+            #####################################
+            elif action == 'api.object-definition':
                 try:
-                    swagger = queryset.get(name__icontains=parameters['api'])
-                    #  Parse the Swagger file
-                    parser = swagger.parse_swaggerfile()
+                    parser = self.get_parser(parameters, context)
                     try:
                         output_data['displayText'] = pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1)
                     except KeyError:
@@ -154,11 +171,11 @@ class BotView(APIView):
                 except ObjectDoesNotExist:
                     output_data['displayText'] = no_api_msg
 
-            elif metadata['intentName'] == 'api-operation':
+            # Operation definitions for specific API
+            ########################################
+            elif action == 'api.operation':
                 try:
-                    swagger = queryset.get(name__icontains=parameters['api'])
-                    #  Parse the Swagger file
-                    parser = swagger.parse_swaggerfile()
+                    parser = self.get_parser(parameters, context)
                     try:
                         output_data['displayText'] = pprint.pformat(parser.operation[parameters['operation']], indent=4, width=1)
                     except KeyError:
@@ -167,13 +184,12 @@ class BotView(APIView):
                 except ObjectDoesNotExist:
                     output_data['displayText'] = no_api_msg
 
-            elif metadata['intentName'] == 'api-path':
+            # Path info for specific API
+            ############################
+            elif action == 'api.path':
                 try:
-                    swagger = queryset.get(name__icontains=parameters['api'])
-                    #  Parse the Swagger file
-                    parser = swagger.parse_swaggerfile()
+                    parser = self.get_parser(parameters, context)
                     try:
-                        import pdb; pdb.set_trace()
                         output_data['displayText'] = pprint.pformat(parser.paths[parameters['path']], indent=4, width=1)
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
