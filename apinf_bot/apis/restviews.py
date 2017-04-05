@@ -54,10 +54,15 @@ class BotView(APIView):
         """
         if 'api' in parameters:
             api = parameters['api']
-        elif contexts and 'api' in contexts[0]['parameters']:
-            api = contexts[0]['parameters']['api']
-        swagger = Swagger.objects.get(name__icontains=api)
-        return swagger.parse_swaggerfile()
+        elif contexts:
+            for context in contexts:
+                if 'api' in context['parameters']:
+                    api = context['parameters']['api']
+                    break
+        try:
+            return Swagger.objects.get(name__icontains=api).parse_swaggerfile()
+        except Exception:
+            return None
 
     def post(self, request, format=None):
         generic_error_msg = _('Arrr! Here ye all be warned, for pirates are lurking...')
@@ -190,7 +195,13 @@ class BotView(APIView):
                 try:
                     parser = self.get_parser(parameters, contexts)
                     try:
-                        output_data['displayText'] = pprint.pformat(parser.paths[parameters['path']], indent=4, width=1)
+                        # TODO
+                        # This is a dirty dirty fix because due to a bug
+                        # in api.ai, the leading / gets stripped
+                        if parameters['path'] in parser.paths:
+                            output_data['displayText'] = pprint.pformat(parser.paths[parameters['path']], indent=4, width=1)
+                        elif '/' + parameters['path'] in parser.paths:
+                            output_data['displayText'] = pprint.pformat(parser.paths['/' + parameters['path']], indent=4, width=1)
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
 
