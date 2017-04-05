@@ -47,7 +47,7 @@ class BotView(APIView):
     * https://docs.api.ai/docs/query#post-query
     * https://docs.api.ai/docs/webhook#webhook-example
     """
-    def get_parser(parameters, contexts):
+    def get_parser(self, parameters, contexts):
         """
         We might be getting the API name from paramaters straight or
         from passed context
@@ -56,7 +56,7 @@ class BotView(APIView):
             api = parameters['api']
         elif contexts and 'api' in contexts[0]['parameters']:
             api = contexts[0]['parameters']['api']
-        swagger = queryset.get(name__icontains=api)
+        swagger = Swagger.objects.get(name__icontains=api)
         return swagger.parse_swaggerfile()
 
     def post(self, request, format=None):
@@ -116,7 +116,7 @@ class BotView(APIView):
             ################################
             elif action == 'api.info':
                 try:
-                    parser = self.get_parser(parameters, context)
+                    parser = self.get_parser(parameters, contexts)
                     # Do we have a request for generic information of this API?
                     if parameters['data'] in info_fields:
                         try:
@@ -162,7 +162,7 @@ class BotView(APIView):
             #####################################
             elif action == 'api.object-definition':
                 try:
-                    parser = self.get_parser(parameters, context)
+                    parser = self.get_parser(parameters, contexts)
                     try:
                         output_data['displayText'] = pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1)
                     except KeyError:
@@ -175,7 +175,7 @@ class BotView(APIView):
             ########################################
             elif action == 'api.operation':
                 try:
-                    parser = self.get_parser(parameters, context)
+                    parser = self.get_parser(parameters, contexts)
                     try:
                         output_data['displayText'] = pprint.pformat(parser.operation[parameters['operation']], indent=4, width=1)
                     except KeyError:
@@ -188,7 +188,7 @@ class BotView(APIView):
             ############################
             elif action == 'api.path':
                 try:
-                    parser = self.get_parser(parameters, context)
+                    parser = self.get_parser(parameters, contexts)
                     try:
                         output_data['displayText'] = pprint.pformat(parser.paths[parameters['path']], indent=4, width=1)
                     except KeyError:
