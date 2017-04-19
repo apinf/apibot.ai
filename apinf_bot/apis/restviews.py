@@ -19,6 +19,9 @@ from .serializers import (
     SwaggerSerializer,
     BotSerializer,
     BotResponseSerializer,
+    QuickRepliesSerializer,
+    QuickRepliesListSerializer,
+    DataSerializer,
 )
 from .lists import (
     info_fields,
@@ -76,17 +79,20 @@ class BotView(APIView):
         if serializer.is_valid():
             # All the APIs
             queryset = Swagger.objects.all()
+
+            # Parse some of the input from api.ai
             parameters = serializer.validated_data['result']['parameters']
             contexts = serializer.validated_data['result']['contexts']
             metadata = serializer.validated_data['result']['metadata']
             action = serializer.validated_data['result']['action']
 
             # Check what type of data we need to return
+
             # List all APIs
             ###############
             if  action == 'api.list':
                 api_list = queryset.values_list('name', flat=True).order_by('name')
-                output_data['displayText'] = _('We have these APIs:\n{0}\n Just tell me if you want to add some more.').format('\n'.join(api_list))
+                output_data['displayText'] = _('We have these APIs:\n{0}\nIf you want to know more about a certain API, just tell me you want to use that one.\nYou can also add a new API if you have a URL to a valid Swagger file.').format('\n'.join(api_list))
 
             # Add a new API
             ###############
@@ -151,6 +157,24 @@ class BotView(APIView):
                         # List all the objects
                         elif parameters['data'] == 'definitions':
                             definitions = parser.definitions_example.keys()
+                            quick_replies_list = []
+
+                            for definition in definitions:
+                                quick_replies_list.append({
+                                        'title': definition,
+                                        'payload': definition.lower(),
+                                    }
+                                )
+
+                            quick_replies = {
+                                'text': 'Which object you want to know more about?',
+                                'quick_replies': quick_replies_list
+                            }
+                            data_response = {
+                                'slack': quick_replies,
+                            }
+
+                            output_data['data'] = data_response
                             output_data['displayText'] = '\n'.join(definitions)
 
                     # No idea what they want...
@@ -198,25 +222,46 @@ class BotView(APIView):
                         # TODO
                         # This is a dirty dirty fix because due to a bug
                         # in api.ai, the leading / gets stripped
+                        # Occasionally check if this is resolved
+                        # https://discuss.api.ai/t/slashes-are-removed/5595
                         if parameters['path'] in parser.paths:
                             output_data['displayText'] = pprint.pformat(parser.paths[parameters['path']], indent=4, width=1)
                         elif '/' + parameters['path'] in parser.paths:
                             output_data['displayText'] = pprint.pformat(parser.paths['/' + parameters['path']], indent=4, width=1)
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
+                    except Exception:
+                        output_data['displayText'] = generic_error_msg
 
                 except ObjectDoesNotExist:
                     output_data['displayText'] = no_api_msg
+                except Exception:
+                    output_data['displayText'] = generic_error_msg
 
-            elif metadata['intentName'] == 'api-endpoint':
-                try:
-                    swagger = queryset.get(name__icontains=parameters['api'])
-                    #  Parse the Swagger file
-                    parser = swagger.parse_swaggerfile()
-                    pass
 
-                except ObjectDoesNotExist:
-                    output_data['displayText'] = no_api_msg
+# TODO
+# "securityDefinitions"
+   # "securityDefinitions":{
+   #    "petstore_auth":{
+   #       "type":"oauth2",
+   #       "authorizationUrl":"http://petstore.swagger.io/oauth/dialog",
+   #       "flow":"implicit",
+   #       "scopes":{
+   #          "write:pets":"modify pets in your account",
+   #          "read:pets":"read your pets"
+   #       }
+   #    },
+   #    "api_key":{
+   #       "type":"apiKey",
+   #       "name":"api_key",
+   #       "in":"header"
+   #    }
+
+
+
+
+            # Fallback response
+            ###################
 
             # We have no idea what this intent is...
             else:

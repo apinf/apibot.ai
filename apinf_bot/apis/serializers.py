@@ -94,12 +94,27 @@ class ContextOutSerializer(Serializer):
     )
 
 
+class QuickRepliesSerializer(Serializer):
+    content_type = CharField(required=False, max_length=100, default='text')
+    title = CharField(required=False, max_length=255)
+    payload = CharField(required=False, max_length=255)
+
+
+class QuickRepliesListSerializer(Serializer):
+    text = CharField(required=False)
+    quick_replies = ListField(
+        child=QuickRepliesSerializer(),
+        required=False,
+    )
+
+
+class DataSerializer(Serializer):
+    slack = QuickRepliesListSerializer(required=False)
+
+
 class BotResponseSerializer(Serializer):
     speech = CharField()
     displayText = CharField()
-    data = DictField(
-        child=CharField(required=False),
-        required=False,
-    )
+    data = DataSerializer(required=False)
     contextOut = ContextOutSerializer(required=False)
     source = CharField(default='apinf-bot')
