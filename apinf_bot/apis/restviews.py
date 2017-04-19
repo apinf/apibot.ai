@@ -166,12 +166,12 @@ class BotView(APIView):
                                 actions.append({
                                         'name': definition,
                                         'text': definition,
-                                        'value': _('Explain object {0}').format(definition),
+                                        'value': _('Show object definition of {0}').format(definition),
                                     }
                                 )
 
                             attachments = {
-                                'text': 'Which object you want to know more about?',
+                                'text': _('Which object you want to know more about? Here are top 5 objects:'),
                                 'fallback': generic_error_msg,
                                 'callback_id': 'object_definitions',
                                 'actions': actions,
@@ -203,7 +203,10 @@ class BotView(APIView):
                 try:
                     parser = self.get_parser(parameters, contexts)
                     try:
-                        output_data['displayText'] = pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1)
+                        output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
+                            parameters['object'],
+                            pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1),
+                        )
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
 

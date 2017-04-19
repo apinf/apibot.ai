@@ -110,6 +110,7 @@ class FBQuickRepliesListSerializer(Serializer):
 
 
 # Slack specific data response
+# https://api.slack.com/docs/message-buttons
 class SLActionsSerializer(Serializer):
     name = CharField(required=False)
     text = CharField(required=False)
