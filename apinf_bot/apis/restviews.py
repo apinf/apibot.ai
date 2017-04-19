@@ -19,9 +19,12 @@ from .serializers import (
     SwaggerSerializer,
     BotSerializer,
     BotResponseSerializer,
-    QuickRepliesSerializer,
-    QuickRepliesListSerializer,
+    FBQuickRepliesSerializer,
+    FBQuickRepliesListSerializer,
     DataSerializer,
+    SLActionsSerializer,
+    SLAttachmentsSerializer,
+    SLAttachmentsListSerializer,
 )
 from .lists import (
     info_fields,
@@ -157,21 +160,28 @@ class BotView(APIView):
                         # List all the objects
                         elif parameters['data'] == 'definitions':
                             definitions = parser.definitions_example.keys()
-                            quick_replies_list = []
+                            actions = []
 
                             for definition in definitions:
-                                quick_replies_list.append({
-                                        'title': definition,
-                                        'payload': definition.lower(),
+                                actions.append({
+                                        'name': definition,
+                                        'text': definition.lower(),
+                                        'value': definition.lower(),
                                     }
                                 )
 
-                            quick_replies = {
+                            attachments = {
                                 'text': 'Which object you want to know more about?',
-                                'quick_replies': quick_replies_list
+                                'fallback': generic_error_msg,
+                                'callback_id': 'object_definitions',
+                                'actions': actions,
+                            }
+                            attachments_list = {
+                                'text': 'Here is a list of objects defined',
+                                'attachments': [attachments, ],
                             }
                             data_response = {
-                                'slack': quick_replies,
+                                'slack': attachments_list,
                             }
 
                             output_data['data'] = data_response

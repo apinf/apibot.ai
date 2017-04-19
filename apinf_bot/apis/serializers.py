@@ -94,23 +94,53 @@ class ContextOutSerializer(Serializer):
     )
 
 
-class QuickRepliesSerializer(Serializer):
+# Facebook specific data response
+class FBQuickRepliesSerializer(Serializer):
     content_type = CharField(required=False, max_length=100, default='text')
     title = CharField(required=False, max_length=255)
     payload = CharField(required=False, max_length=255)
 
 
-class QuickRepliesListSerializer(Serializer):
+class FBQuickRepliesListSerializer(Serializer):
     text = CharField(required=False)
     quick_replies = ListField(
-        child=QuickRepliesSerializer(),
+        child=FBQuickRepliesSerializer(),
+        required=False,
+    )
+
+
+# Slack specific data response
+class SLActionsSerializer(Serializer):
+    name = CharField(required=False)
+    text = CharField(required=False)
+    type = CharField(required=False, default='button')
+    value = CharField(required=False)
+
+
+
+class SLAttachmentsSerializer(Serializer):
+    text = CharField(required=False)
+    fallback = CharField(required=False)
+    callback_id = CharField(required=False)
+    color = CharField(required=False)
+    attachment_type = CharField(required=False, default='default')
+    actions = ListField(
+        child=SLActionsSerializer(),
+        required=False,
+    )
+
+
+class SLAttachmentsListSerializer(Serializer):
+    text = CharField(required=False)
+    attachments = ListField(
+        child=SLAttachmentsSerializer(),
         required=False,
     )
 
 
 class DataSerializer(Serializer):
-    slack = QuickRepliesListSerializer(required=False)
-
+    slack = SLAttachmentsListSerializer(required=False)
+    facebook = FBQuickRepliesListSerializer(required=False)
 
 class BotResponseSerializer(Serializer):
     speech = CharField()
