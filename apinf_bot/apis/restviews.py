@@ -165,8 +165,8 @@ class BotView(APIView):
                             for definition in definitions:
                                 actions.append({
                                         'name': definition,
-                                        'text': definition.lower(),
-                                        'value': definition.lower(),
+                                        'text': definition,
+                                        'value': _('Explain object {0}').format(definition),
                                     }
                                 )
 
@@ -177,7 +177,7 @@ class BotView(APIView):
                                 'actions': actions,
                             }
                             attachments_list = {
-                                'text': 'Here is a list of objects defined',
+                                'text': _('Here is a list of objects defined:\n{0}').format('\n'.join(definitions)),
                                 'attachments': [attachments, ],
                             }
                             data_response = {
