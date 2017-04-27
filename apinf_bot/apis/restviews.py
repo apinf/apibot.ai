@@ -53,24 +53,30 @@ class BotView(APIView):
     * https://docs.api.ai/docs/query#post-query
     * https://docs.api.ai/docs/webhook#webhook-example
     """
-    def get_parser(self, parameters, contexts):
+    def get_api(self, parameters, contexts):
+        if 'api' in parameters:
+            return parameters['api']
+        elif contexts:
+            for context in contexts:
+                if 'api' in context['parameters']:
+                    return context['parameters']['api']
+        else:
+            return None
+
+    def get_parser(self, api):
         """
         We might be getting the API name from paramaters straight or
         from passed context
         """
-        if 'api' in parameters:
-            api = parameters['api']
-        elif contexts:
-            for context in contexts:
-                if 'api' in context['parameters']:
-                    api = context['parameters']['api']
-                    break
         try:
             return Swagger.objects.get(name__icontains=api).parse_swaggerfile()
         except Exception:
             return None
 
     def post(self, request, format=None):
+        # Some docs:
+        # Slack
+        # Basic formatting: https://api.slack.com/docs/message-formatting
         generic_error_msg = _('Arrr! Here ye all be warned, for pirates are lurking...')
         not_existing_msg = _('This information is not defined in the Swagger file. Sorry!')
         not_defined_msg = _('This data is not part of the OpenAPI specifications: https://github.com/OAI/OpenAPI-Specification')
@@ -95,7 +101,35 @@ class BotView(APIView):
             ###############
             if  action == 'api.list':
                 api_list = queryset.values_list('name', flat=True).order_by('name')
-                output_data['displayText'] = _('We have these APIs:\n{0}\nIf you want to know more about a certain API, just tell me you want to use that one.\nYou can also add a new API if you have a URL to a valid Swagger file.').format('\n'.join(api_list))
+
+                # Define buttons for Slack
+                actions = []
+
+                for api in api_list:
+                    actions.append({
+                            'name': api,
+                            'text': api,
+                            'value': _('Use {0}').format(api),
+                        }
+                    )
+
+                attachments = {
+                    'text': _('Which API you want to know more about? Here are top APIs:'),
+                    'fallback': generic_error_msg,
+                    'callback_id': 'api_list',
+                    'actions': actions,
+                }
+                attachments_list = {
+                    'text': _('We have these APIs:\n{0}\nIf you want to know more about a certain API, just tell me you want to *use* that one.\nYou can also *create* a new API if you have a URL to a valid Swagger file.').format('\n'.join(api_list)),
+                    'attachments': [attachments, ],
+                }
+                data_response = {
+                    'slack': attachments_list,
+                }
+
+                output_data['data'] = data_response
+
+                output_data['displayText'] = _('We have these APIs:\n{0}\nIf you want to know more about a certain API, just tell me you want to *use* that one.\nYou can also *create* a new API if you have a URL to a valid Swagger file.').format('\n'.join(api_list))
 
             # Add a new API
             ###############
@@ -130,11 +164,16 @@ class BotView(APIView):
             ################################
             elif action == 'api.info':
                 try:
-                    parser = self.get_parser(parameters, contexts)
+                    api = self.get_api(parameters, contexts)
+                    parser = self.get_parser(api)
                     # Do we have a request for generic information of this API?
                     if parameters['data'] in info_fields:
                         try:
-                            output_data['displayText'] = parser.specification['info'][parameters['data']]
+                            output_data['displayText'] = _('Here is the *{0}* you asked for *{1}*:\n{2}').format(
+                                parameters['data'],
+                                api,
+                                parser.specification['info'][parameters['data']],
+                            )
                         except:
                             output_data['displayText'] = not_existing_msg
 
@@ -160,6 +199,8 @@ class BotView(APIView):
                         # List all the objects
                         elif parameters['data'] == 'definitions':
                             definitions = parser.definitions_example.keys()
+
+                            # Define buttons for Slack
                             actions = []
 
                             for definition in definitions:
@@ -171,7 +212,7 @@ class BotView(APIView):
                                 )
 
                             attachments = {
-                                'text': _('Which object you want to know more about? Here are top 5 objects:'),
+                                'text': _('Which object you want to know more about? Here are top objects:'),
                                 'fallback': generic_error_msg,
                                 'callback_id': 'object_definitions',
                                 'actions': actions,
@@ -185,6 +226,8 @@ class BotView(APIView):
                             }
 
                             output_data['data'] = data_response
+
+                            # And display text
                             output_data['displayText'] = '\n'.join(definitions)
 
                     # No idea what they want...
@@ -201,7 +244,8 @@ class BotView(APIView):
             #####################################
             elif action == 'api.object-definition':
                 try:
-                    parser = self.get_parser(parameters, contexts)
+                    api = self.get_api(parameters, contexts)
+                    parser = self.get_parser(api)
                     try:
                         output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
                             parameters['object'],
@@ -217,7 +261,8 @@ class BotView(APIView):
             ########################################
             elif action == 'api.operation':
                 try:
-                    parser = self.get_parser(parameters, contexts)
+                    api = self.get_api(parameters, contexts)
+                    parser = self.get_parser(api)
                     try:
                         output_data['displayText'] = pprint.pformat(parser.operation[parameters['operation']], indent=4, width=1)
                     except KeyError:
@@ -230,7 +275,8 @@ class BotView(APIView):
             ############################
             elif action == 'api.path':
                 try:
-                    parser = self.get_parser(parameters, contexts)
+                    api = self.get_api(parameters, contexts)
+                    parser = self.get_parser(api)
                     try:
                         # TODO
                         # This is a dirty dirty fix because due to a bug
