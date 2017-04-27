@@ -60,8 +60,7 @@ class BotView(APIView):
             for context in contexts:
                 if 'api' in context['parameters']:
                     return context['parameters']['api']
-        else:
-            return None
+        return None
 
     def get_parser(self, api):
         """
@@ -77,7 +76,7 @@ class BotView(APIView):
         # Some docs:
         # Slack
         # Basic formatting: https://api.slack.com/docs/message-formatting
-        generic_error_msg = _('Arrr! Here ye all be warned, for pirates are lurking...')
+        generic_error_msg = _('Something went wrong here... I will tell the developers and hopefully they will manage to fix this.')
         not_existing_msg = _('This information is not defined in the Swagger file. Sorry!')
         not_defined_msg = _('This data is not part of the OpenAPI specifications: https://github.com/OAI/OpenAPI-Specification')
         no_api_msg = _('We do not have information about this API. Feel free to add it yourself!')
@@ -180,7 +179,11 @@ class BotView(APIView):
                     # Do we have Swagger object fields?
                     elif parameters['data'] in swagger_fields:
                         try:
-                            output_data['displayText'] = parser.specification[parameters['data']]
+                            output_data['displayText'] = _('Here is the *{0}* you asked for *{1}*:\n{2}').format(
+                                parameters['data'],
+                                api,
+                                parser.specification[parameters['data']]
+                            )
                         except:
                             output_data['displayText'] = not_existing_msg
 
@@ -189,46 +192,87 @@ class BotView(APIView):
                         # List all the paths
                         if parameters['data'] == 'paths':
                             paths = parser.paths.keys()
-                            output_data['displayText'] = '\n'.join(paths)
+                            output_data['displayText'] = _('Here is the *{0}* you asked for *{1}*:\n{2}').format(
+                                parameters['data'],
+                                api,
+                                '\n'.join(paths)
+                            )
 
                         # List all the operations
                         elif parameters['data'] == 'operations':
                             operations = parser.operation.keys()
-                            output_data['displayText'] = '\n'.join(operations)
+                            if(operations):
+                                # Define buttons for Slack
+                                actions = []
+
+                                for operation in operations:
+                                    actions.append({
+                                            'name': operation,
+                                            'text': operation,
+                                            'value': _('Show operation definition of {0}').format(operation),
+                                        }
+                                    )
+
+                                attachments = {
+                                    'text': _('Which operation you want to know more about? Here are top operation:'),
+                                    'fallback': generic_error_msg,
+                                    'callback_id': 'operations',
+                                    'actions': actions,
+                                }
+                                attachments_list = {
+                                    'text': _('Here is a list of operations defined:\n{0}').format('\n'.join(operations)),
+                                    'attachments': [attachments, ],
+                                }
+                                data_response = {
+                                    'slack': attachments_list,
+                                }
+
+                                output_data['data'] = data_response
+
+                                output_data['displayText'] = _('Here is the *{0}* you asked for *{1}*:\n{2}').format(
+                                    parameters['data'],
+                                    api,
+                                    '\n'.join(operations)
+                                )
+                            else:
+                                output_data['displayText'] = _('There are no operations defined in these OpenAPI specification.')
 
                         # List all the objects
                         elif parameters['data'] == 'definitions':
                             definitions = parser.definitions_example.keys()
+                            if(definitions):
+                                # Define buttons for Slack
+                                actions = []
 
-                            # Define buttons for Slack
-                            actions = []
+                                for definition in definitions:
+                                    actions.append({
+                                            'name': definition,
+                                            'text': definition,
+                                            'value': _('Show object definition of {0}').format(definition),
+                                        }
+                                    )
 
-                            for definition in definitions:
-                                actions.append({
-                                        'name': definition,
-                                        'text': definition,
-                                        'value': _('Show object definition of {0}').format(definition),
-                                    }
-                                )
+                                attachments = {
+                                    'text': _('Which object you want to know more about? Here are top objects:'),
+                                    'fallback': generic_error_msg,
+                                    'callback_id': 'object_definitions',
+                                    'actions': actions,
+                                }
+                                attachments_list = {
+                                    'text': _('Here is a list of objects defined:\n{0}').format('\n'.join(definitions)),
+                                    'attachments': [attachments, ],
+                                }
+                                data_response = {
+                                    'slack': attachments_list,
+                                }
 
-                            attachments = {
-                                'text': _('Which object you want to know more about? Here are top objects:'),
-                                'fallback': generic_error_msg,
-                                'callback_id': 'object_definitions',
-                                'actions': actions,
-                            }
-                            attachments_list = {
-                                'text': _('Here is a list of objects defined:\n{0}').format('\n'.join(definitions)),
-                                'attachments': [attachments, ],
-                            }
-                            data_response = {
-                                'slack': attachments_list,
-                            }
+                                output_data['data'] = data_response
 
-                            output_data['data'] = data_response
-
-                            # And display text
-                            output_data['displayText'] = '\n'.join(definitions)
+                                # And display text
+                                output_data['displayText'] = '\n'.join(definitions)
+                            else:
+                                # And display text
+                                output_data['displayText'] = _('No objects are defined in this OpenAPI specification.')
 
                     # No idea what they want...
                     # TODO: start logging these so we can analyze
