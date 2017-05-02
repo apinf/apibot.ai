@@ -214,7 +214,7 @@ class BotView(APIView):
                                     )
 
                                 attachments = {
-                                    'text': _('Which operation you want to know more about? Here are top operation:'),
+                                    'text': _('Which operation you want to know more about? Here are the top operations:'),
                                     'fallback': generic_error_msg,
                                     'callback_id': 'operations',
                                     'actions': actions,
@@ -308,7 +308,10 @@ class BotView(APIView):
                     api = self.get_api(parameters, contexts)
                     parser = self.get_parser(api)
                     try:
-                        output_data['displayText'] = pprint.pformat(parser.operation[parameters['operation']], indent=4, width=1)
+                        output_data['displayText'] = _('Here is the operation definition for *{0}*:\n{1}').format(
+                            parameters['operation'],
+                            pprint.pformat(parser.operation[parameters['operation']], indent=4, width=1),
+                        )
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
 
@@ -328,9 +331,17 @@ class BotView(APIView):
                         # Occasionally check if this is resolved
                         # https://discuss.api.ai/t/slashes-are-removed/5595
                         if parameters['path'] in parser.paths:
-                            output_data['displayText'] = pprint.pformat(parser.paths[parameters['path']], indent=4, width=1)
+                            path = parameters['path']
                         elif '/' + parameters['path'] in parser.paths:
-                            output_data['displayText'] = pprint.pformat(parser.paths['/' + parameters['path']], indent=4, width=1)
+                            path = '/' + parameters['path']
+
+                        output_data['displayText'] = _('Here is the path definition for *{0}*:\n{1}').format(
+                            path,
+                            pprint.pformat(parser.paths[path], indent=4, width=1),
+                        )
+
+                        output_data['displayText'] = pprint.pformat(parser.paths[path], indent=4, width=1)
+
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
                     except Exception:
