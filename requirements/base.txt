@@ -44,15 +44,11 @@ django-redis==4.7.0
 redis>=2.10.5
 
 
-
-
-
-# Your custom requirements go here
-
 # REST api
 djangorestframework==3.6.2
 
 # Swagger
+# TODO: keep an eye on the pull requests getting merged upstream
 #swagger-parser==0.1.11
 -e git+https://github.com/philippeluickx/swagger-parser.git@422f949b04c952ae582ce6c8fc8b229337d04827#egg=swagger-parser
 

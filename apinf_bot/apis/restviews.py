@@ -291,10 +291,58 @@ class BotView(APIView):
                     api = self.get_api(parameters, contexts)
                     parser = self.get_parser(api)
                     try:
-                        output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
-                            parameters['object'],
-                            pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1),
-                        )
+                        # Sometimes the keys are stored in lower or titlecase.
+                        # We deal with that.
+                        if(parameters['object'] in parser.definitions_example):
+                            definitions_example = parser.definitions_example[parameters['object']]
+                        elif(parameters['object'].lower() in parser.definitions_example):
+                            definitions_example = parser.definitions_example[parameters['object'].lower()]
+                        else:
+                            definitions_example = parser.definitions_example[parameters['object'].title()]
+
+                        # Are there linked operations to this object?
+                        # Check both the input and titlecase and lowercase
+                        operations = {k: v for k,v in parser.operation.items() if v[2] == (parameters['object'] or parameters['object'].title() or parameters['object'].title())}
+
+                        if(operations and definitions_example):
+                            # Define buttons for Slack
+                            actions = []
+
+                            for operation in operations:
+                                actions.append({
+                                        'name': operation,
+                                        'text': operation,
+                                        'value': _('Show operation {0}').format(operation),
+                                    }
+                                )
+
+                            attachments = {
+                                'text': _('Which operation you want to know more about? Here are top operations:'),
+                                'fallback': generic_error_msg,
+                                'callback_id': 'object_definitions',
+                                'actions': actions,
+                            }
+                            attachments_list = {
+                                'text': _('Here is the object definition for *{0}*:\n{1}\n\nI also found these operations linked to it:\n{2}').format(
+                                    parameters['object'],
+                                    pprint.pformat(definitions_example, indent=4, width=1),
+                                    '\n'.join(operations.keys()),
+                                ),
+                                'attachments': [attachments, ],
+                            }
+                            data_response = {
+                                'slack': attachments_list,
+                            }
+
+                            output_data['data'] = data_response
+
+                            # And display text
+                            output_data['displayText'] = '\n'.join(operations.keys())
+                        elif(definitions_example):
+                            output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
+                                parameters['object'],
+                                pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1),
+                            )
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
 
