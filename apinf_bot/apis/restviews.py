@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import pprint
+import re
 
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
@@ -239,7 +240,7 @@ class BotView(APIView):
 
                         # List all the objects
                         elif parameters['data'] == 'definitions':
-                            definitions = parser.definitions_example.keys()
+                            definitions = parser.specification['definitions'].keys()
                             if(definitions):
                                 # Define buttons for Slack
                                 actions = []
@@ -288,63 +289,143 @@ class BotView(APIView):
             #####################################
             elif action == 'api.object-definition':
                 try:
+                    # TODO
+                    # Use parser.specification['definitions'] instead
+                    # Give an example can be added explicitly
                     api = self.get_api(parameters, contexts)
                     parser = self.get_parser(api)
-                    try:
-                        # Sometimes the keys are stored in lower or titlecase.
-                        # We deal with that.
-                        if(parameters['object'] in parser.definitions_example):
-                            definitions_example = parser.definitions_example[parameters['object']]
-                        elif(parameters['object'].lower() in parser.definitions_example):
-                            definitions_example = parser.definitions_example[parameters['object'].lower()]
-                        else:
-                            definitions_example = parser.definitions_example[parameters['object'].title()]
+                    # Sometimes the keys are stored in lower or titlecase.
+                    # We deal with that.
+                    if(parameters['object'] in parser.specification['definitions']):
+                        definitions = parser.specification['definitions'][parameters['object']]
+                    elif(parameters['object'].lower() in parser.specification['definitions']):
+                        definitions = parser.specification['definitions'][parameters['object'].lower()]
+                    else:
+                        definitions = parser.specification['definitions'][parameters['object'].title()]
 
-                        # Are there linked operations to this object?
-                        # Check both the input and titlecase and lowercase
-                        operations = {k: v for k,v in parser.operation.items() if v[2] == (parameters['object'] or parameters['object'].title() or parameters['object'].title())}
+                    # Are there linked operations to this object?
+                    # TODO
+                    # Follow-up on https://github.com/OAI/OpenAPI-Specification/issues/1097
+                    # Now comes a dirty and messy method filled with assumptions
+                    # But it's the best we can do so far
 
-                        if(operations and definitions_example):
-                            # Define buttons for Slack
-                            actions = []
+                    # 1. Check for schema references to the object
+                    # 1.1 parameters
+                    # (Pdb) parser.paths['/v2/pet']['put']['parameters']['body']['schema']['$ref']
+                    # parser.paths[path][method]['parameters']['body']['schema']['$ref']
+                    # Loop through every path, method
+                    # 1.2 Response
+                    # (Pdb) parser.paths['/v2/pet/{petId}']['get']['responses']['200']['schema']['$ref']
+                    # parser.paths[path][method]['responses'][status-code]['schema']['$ref']
+                    # Loop through every path, method, status-code
+                    # result: '#/definitions/<object>' - regex
+                    # 2. Check for tags using the same name
+                    # (Pdb) parser.operation['getInventory'][2]
+                    # parser.operation[operation][2]
+                    # Loop through operations
+                    # 'store'
+                    # 3. Check for paths containing the same name - regex
+                    # 4. Check for operations containing the same name - regex
+                    # TODO
+                    # Nested list comprehension: http://stackoverflow.com/questions/3633140/nested-for-loops-using-list-comprehension
+                    operations = {}
+                    for path in parser.specification['paths']:
+                        for method in parser.specification['paths'][path]:
+                            operation = parser.specification['paths'][path][method]['operationId']
 
-                            for operation in operations:
-                                actions.append({
-                                        'name': operation,
-                                        'text': operation,
-                                        'value': _('Show operation {0}').format(operation),
-                                    }
-                                )
+                            # Do we have tags referencing the object?
+                            if('tags' in parser.specification['paths'][path][method]):
+                                if(parameters['object'].lower() in [tag.lower() for tag in parser.specification['paths'][path][method]['tags']]):
+                                    operations[operation] = {path, method}
+                                    break
 
-                            attachments = {
-                                'text': _('Which operation you want to know more about? Here are top operations:'),
-                                'fallback': generic_error_msg,
-                                'callback_id': 'object_definitions',
-                                'actions': actions,
-                            }
-                            attachments_list = {
-                                'text': _('Here is the object definition for *{0}*:\n{1}\n\nI also found these operations linked to it:\n{2}').format(
-                                    parameters['object'],
-                                    pprint.pformat(definitions_example, indent=4, width=1),
-                                    '\n'.join(operations.keys()),
-                                ),
-                                'attachments': [attachments, ],
-                            }
-                            data_response = {
-                                'slack': attachments_list,
-                            }
+                            # Do we have the name of the object in the path somewhere?
+                            if(parameters['object'].lower() in path):
+                                operations[operation] = {path, method}
+                                break
 
-                            output_data['data'] = data_response
+                            # Do we have the name of the object in the operation name somewhere?
+                            if(parameters['object'].lower() in operation):
+                                operations[operation] = {path, method}
+                                break
 
-                            # And display text
-                            output_data['displayText'] = '\n'.join(operations.keys())
-                        elif(definitions_example):
-                            output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
-                                parameters['object'],
-                                pprint.pformat(parser.definitions_example[parameters['object']], indent=4, width=1),
+                            # Do we have input parameters referencing the object? e.g. PUT or POST methods
+                            if('parameters' in parser.specification['paths'][path][method]):
+                                for parameter in parser.specification['paths'][path][method]['parameters']:
+                                    # Regex the object out
+                                    try:
+                                        match = re.match(r'#/definitions/(\w+)', parameter['schema']['$ref'])
+                                        # Does the object match the input from user?
+                                        if(match and match.group(1).lower() == parameters['object'].lower()):
+                                            operations[operation] = {path, method}
+                                            break
+                                    except Exception:
+                                        pass
+
+                            # Do we have responses referencing the object? e.g. GET methods
+                            if('responses' in parser.specification['paths'][path][method]):
+                                try:
+                                    for status_code in parser.specification['paths'][path][method]['responses']:
+                                        if('schema' in parser.specification['paths'][path][method]['responses'][status_code]):
+                                            # In case of a list of objects
+                                            if('items' in parser.specification['paths'][path][method]['responses'][status_code]['schema']):
+                                                match = re.match(r'#/definitions/(\w+)', parser.specification['paths'][path][method]['responses'][status_code]['schema']['items']['$ref'])
+                                                # Does the object match the input from user?
+                                                if(match and match.group(1).lower() == parameters['object'].lower()):
+                                                    operations[operation] = {path, method}
+                                                    break
+                                            # In case of a single item
+                                            else:
+                                                match = re.match(r'#/definitions/(\w+)', parser.specification['paths'][path][method]['responses'][status_code]['schema']['$ref'])
+                                                # Does the object match the input from user?
+                                                if(match and match.group(1).lower() == parameters['object'].lower()):
+                                                    operations[operation] = {path, method}
+                                                    break
+
+                                except Exception:
+                                    pass
+
+                    if(operations and definitions):
+                        # Define buttons for Slack
+                        actions = []
+
+                        for operation in operations:
+                            actions.append({
+                                    'name': operation,
+                                    'text': operation,
+                                    'value': _('Show operation {0}').format(operation),
+                                }
                             )
-                    except KeyError:
-                        output_data['displayText'] = not_defined_msg
+
+                        attachments = {
+                            'text': _('Which operation you want to know more about? Here are top operations:'),
+                            'fallback': generic_error_msg,
+                            'callback_id': 'object_definitions',
+                            'actions': actions,
+                        }
+                        attachments_list = {
+                            'text': _('Here is the object definition for *{0}*:\n{1}\n\nI also found these operations linked to it:\n{2}').format(
+                                parameters['object'],
+                                pprint.pformat(definitions, indent=4, width=1),
+                                '\n'.join(operations.keys()),
+                            ),
+                            'attachments': [attachments, ],
+                        }
+                        data_response = {
+                            'slack': attachments_list,
+                        }
+
+                        output_data['data'] = data_response
+
+                        # And display text
+                        output_data['displayText'] = '\n'.join(operations.keys())
+                    elif(definitions):
+                        output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
+                            parameters['object'],
+                            pprint.pformat(definitions, indent=4, width=1),
+                        )
+                except KeyError:
+                    output_data['displayText'] = not_defined_msg
 
                 except ObjectDoesNotExist:
                     output_data['displayText'] = no_api_msg
