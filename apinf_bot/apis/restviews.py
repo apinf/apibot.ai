@@ -191,13 +191,45 @@ class BotView(APIView):
                     # Some general data about the API
                     elif parameters['data'] in general_data:
                         # List all the paths
+                        # TODO
+                        # Add buttons
                         if parameters['data'] == 'paths':
                             paths = parser.paths.keys()
-                            output_data['displayText'] = _('Here is the *{0}* you asked for *{1}*:\n{2}').format(
-                                parameters['data'],
-                                api,
-                                '\n'.join(paths)
-                            )
+                            if(paths):
+                                # Define buttons for Slack
+                                actions = []
+
+                                for path in paths:
+                                    actions.append({
+                                            'name': path,
+                                            'text': path,
+                                            'value': _('Show path of {0}').format(path),
+                                        }
+                                    )
+
+                                attachments = {
+                                    'text': _('Which path you want to know more about? Here are the top paths:'),
+                                    'fallback': generic_error_msg,
+                                    'callback_id': 'paths',
+                                    'actions': actions,
+                                }
+                                attachments_list = {
+                                    'text': _('Here is a list of paths defined:\n{0}').format('\n'.join(paths)),
+                                    'attachments': [attachments, ],
+                                }
+                                data_response = {
+                                    'slack': attachments_list,
+                                }
+
+                                output_data['data'] = data_response
+
+                                output_data['displayText'] = _('Here is the *{0}* you asked for *{1}*:\n{2}').format(
+                                    parameters['data'],
+                                    api,
+                                    '\n'.join(paths)
+                                )
+                            else:
+                                output_data['displayText'] = _('There are no paths defined in this OpenAPI specification.')
 
                         # List all the operations
                         elif parameters['data'] == 'operations':
@@ -210,7 +242,7 @@ class BotView(APIView):
                                     actions.append({
                                             'name': operation,
                                             'text': operation,
-                                            'value': _('Show operation definition of {0}').format(operation),
+                                            'value': _('Show operation of {0}').format(operation),
                                         }
                                     )
 
@@ -236,7 +268,7 @@ class BotView(APIView):
                                     '\n'.join(operations)
                                 )
                             else:
-                                output_data['displayText'] = _('There are no operations defined in these OpenAPI specification.')
+                                output_data['displayText'] = _('There are no operations defined in this OpenAPI specification.')
 
                         # List all the objects
                         elif parameters['data'] == 'definitions':
@@ -290,7 +322,6 @@ class BotView(APIView):
             elif action == 'api.object-definition':
                 try:
                     # TODO
-                    # Use parser.specification['definitions'] instead
                     # Give an example can be added explicitly
                     api = self.get_api(parameters, contexts)
                     parser = self.get_parser(api)
