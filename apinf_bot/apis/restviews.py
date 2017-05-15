@@ -219,7 +219,7 @@ class BotView(APIView):
                                     'actions': actions,
                                 }
                                 attachments_list = {
-                                    'text': _('Here is a list of paths defined:\n{0}').format('\n'.join(paths)),
+                                    'text': _('Here is a *list of paths* defined:\n{0}').format('\n'.join(paths)),
                                     'attachments': [attachments, ],
                                 }
                                 data_response = {
@@ -258,7 +258,7 @@ class BotView(APIView):
                                     'actions': actions,
                                 }
                                 attachments_list = {
-                                    'text': _('Here is a list of operations defined:\n{0}').format('\n'.join(operations)),
+                                    'text': _('Here is a *list of operations* defined:\n{0}').format('\n'.join(operations)),
                                     'attachments': [attachments, ],
                                 }
                                 data_response = {
@@ -297,7 +297,7 @@ class BotView(APIView):
                                     'actions': actions,
                                 }
                                 attachments_list = {
-                                    'text': _('Here is a list of objects defined:\n{0}').format('\n'.join(definitions)),
+                                    'text': _('Here is a *list of objects* defined:\n{0}').format('\n'.join(definitions)),
                                     'attachments': [attachments, ],
                                 }
                                 data_response = {
@@ -333,11 +333,11 @@ class BotView(APIView):
                     # Sometimes the keys are stored in lower or titlecase.
                     # We deal with that.
                     if(parameters['object'] in parser.specification['definitions']):
-                        definitions = parser.specification['definitions'][parameters['object']]
+                        definition = parser.specification['definitions'][parameters['object']]
                     elif(parameters['object'].lower() in parser.specification['definitions']):
-                        definitions = parser.specification['definitions'][parameters['object'].lower()]
+                        definition = parser.specification['definitions'][parameters['object'].lower()]
                     else:
-                        definitions = parser.specification['definitions'][parameters['object'].title()]
+                        definition = parser.specification['definitions'][parameters['object'].title()]
 
                     # Are there linked operations to this object?
                     # TODO
@@ -429,7 +429,7 @@ class BotView(APIView):
                                 except Exception:
                                     pass
 
-                    if(operations and definitions):
+                    if(operations and definition):
                         # Define buttons for Slack
                         actions = []
 
@@ -444,13 +444,13 @@ class BotView(APIView):
                         attachments = {
                             'text': _('Which operation you want to know more about? Here are top operations:'),
                             'fallback': generic_error_msg,
-                            'callback_id': 'object_definitions',
+                            'callback_id': 'object_definition',
                             'actions': actions,
                         }
                         attachments_list = {
                             'text': _('Here is the object definition for *{0}*:\n{1}\n\nI also found these operations linked to it:\n{2}').format(
                                 parameters['object'],
-                                pprint.pprint(definitions),
+                                pprint.pformat(definition),
                                 '\n'.join(operations.keys()),
                             ),
                             'attachments': [attachments, ],
@@ -463,10 +463,10 @@ class BotView(APIView):
 
                         # And display text
                         output_data['displayText'] = '\n'.join(operations.keys())
-                    elif(definitions):
+                    elif(definition):
                         output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
                             parameters['object'],
-                            pprint.pprint(definitions),
+                            pprint.pformat(definition),
                         )
                 except KeyError:
                     output_data['displayText'] = not_defined_msg
@@ -483,7 +483,7 @@ class BotView(APIView):
                     try:
                         output_data['displayText'] = _('Here is the operation definition for *{0}*:\n{1}').format(
                             parameters['operation'],
-                            pprint.pprint(parser.operation[parameters['operation']]),
+                            pprint.pformat(parser.operation[parameters['operation']]),
                         )
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
@@ -510,10 +510,10 @@ class BotView(APIView):
 
                         output_data['displayText'] = _('Here is the path definition for *{0}*:\n{1}').format(
                             path,
-                            pprint.pprint(parser.paths[path]),
+                            pprint.pformat(parser.paths[path]),
                         )
 
-                        output_data['displayText'] = pprint.pprint(parser.paths[path])
+                        output_data['displayText'] = pprint.pformat(parser.paths[path])
 
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
