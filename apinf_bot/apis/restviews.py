@@ -320,7 +320,6 @@ class BotView(APIView):
             # Object definitions for specific API
             #####################################
             elif action == 'api.object-definition':
-                import pdb; pdb.set_trace()
                 try:
                     # TODO
                     # Give an example can be added explicitly
