@@ -208,7 +208,7 @@ class BotView(APIView):
                                     actions.append({
                                             'name': path,
                                             'text': path,
-                                            'value': _('Show path {0}').format(path),
+                                            'value': _('Explain path {0}').format(path),
                                         }
                                     )
 
@@ -247,7 +247,7 @@ class BotView(APIView):
                                     actions.append({
                                             'name': operation,
                                             'text': operation,
-                                            'value': _('Show operation {0}').format(operation),
+                                            'value': _('Explain operation {0}').format(operation),
                                         }
                                     )
 
@@ -286,7 +286,7 @@ class BotView(APIView):
                                     actions.append({
                                             'name': definition,
                                             'text': definition,
-                                            'value': _('Show object definition {0}').format(definition),
+                                            'value': _('Explain object {0}').format(definition),
                                         }
                                     )
 
@@ -437,7 +437,7 @@ class BotView(APIView):
                             actions.append({
                                     'name': operation,
                                     'text': operation,
-                                    'value': _('Show operation {0}').format(operation),
+                                    'value': _('Explain operation {0}').format(operation),
                                 }
                             )
 
