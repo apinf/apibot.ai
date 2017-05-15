@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+# TODO
+# - Output formatting of dictionaries
+# - Descriptions have words split over lines
+# - Split code into functions to make it more readable
+# - Security definitions
 import pprint
 import re
 
@@ -445,7 +450,7 @@ class BotView(APIView):
                         attachments_list = {
                             'text': _('Here is the object definition for *{0}*:\n{1}\n\nI also found these operations linked to it:\n{2}').format(
                                 parameters['object'],
-                                pprint.pformat(definitions, indent=4, width=1),
+                                pprint.pprint(definitions),
                                 '\n'.join(operations.keys()),
                             ),
                             'attachments': [attachments, ],
@@ -461,7 +466,7 @@ class BotView(APIView):
                     elif(definitions):
                         output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
                             parameters['object'],
-                            pprint.pformat(definitions, indent=4, width=1),
+                            pprint.pprint(definitions),
                         )
                 except KeyError:
                     output_data['displayText'] = not_defined_msg
@@ -478,7 +483,7 @@ class BotView(APIView):
                     try:
                         output_data['displayText'] = _('Here is the operation definition for *{0}*:\n{1}').format(
                             parameters['operation'],
-                            pprint.pformat(parser.operation[parameters['operation']], indent=4, width=1),
+                            pprint.pprint(parser.operation[parameters['operation']]),
                         )
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
@@ -505,10 +510,10 @@ class BotView(APIView):
 
                         output_data['displayText'] = _('Here is the path definition for *{0}*:\n{1}').format(
                             path,
-                            pprint.pformat(parser.paths[path], indent=4, width=1),
+                            pprint.pprint(parser.paths[path]),
                         )
 
-                        output_data['displayText'] = pprint.pformat(parser.paths[path], indent=4, width=1)
+                        output_data['displayText'] = pprint.pprint(parser.paths[path])
 
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
