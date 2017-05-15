@@ -203,7 +203,7 @@ class BotView(APIView):
                                     actions.append({
                                             'name': path,
                                             'text': path,
-                                            'value': _('Show path of {0}').format(path),
+                                            'value': _('Show path {0}').format(path),
                                         }
                                     )
 
@@ -242,7 +242,7 @@ class BotView(APIView):
                                     actions.append({
                                             'name': operation,
                                             'text': operation,
-                                            'value': _('Show operation of {0}').format(operation),
+                                            'value': _('Show operation {0}').format(operation),
                                         }
                                     )
 
@@ -281,7 +281,7 @@ class BotView(APIView):
                                     actions.append({
                                             'name': definition,
                                             'text': definition,
-                                            'value': _('Show object definition of {0}').format(definition),
+                                            'value': _('Show object definition {0}').format(definition),
                                         }
                                     )
 
@@ -320,6 +320,7 @@ class BotView(APIView):
             # Object definitions for specific API
             #####################################
             elif action == 'api.object-definition':
+                import pdb; pdb.set_trace()
                 try:
                     # TODO
                     # Give an example can be added explicitly
@@ -357,12 +358,20 @@ class BotView(APIView):
                     # 'store'
                     # 3. Check for paths containing the same name - regex
                     # 4. Check for operations containing the same name - regex
-                    # TODO
-                    # Nested list comprehension: http://stackoverflow.com/questions/3633140/nested-for-loops-using-list-comprehension
+
                     operations = {}
+
                     for path in parser.specification['paths']:
                         for method in parser.specification['paths'][path]:
-                            operation = parser.specification['paths'][path][method]['operationId']
+                            # Sometimes we don't have the operationID defined
+                            # Show method and path instead
+                            if('operationId' in parser.specification['paths'][path][method]):
+                                operation = parser.specification['paths'][path][method]['operationId']
+                            else:
+                                operation = _('{0} {1}').format(
+                                    method.upper(),
+                                    path,
+                                )
 
                             # Do we have tags referencing the object?
                             if('tags' in parser.specification['paths'][path][method]):
