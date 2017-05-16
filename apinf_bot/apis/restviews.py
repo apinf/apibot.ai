@@ -526,6 +526,7 @@ class BotView(APIView):
             ############################
             elif action == 'api.path':
                 try:
+                    import pdb; pdb.set_trace()
                     api = self.get_api(parameters, contexts)
                     parser = self.get_parser(api)
                     try:
@@ -534,17 +535,17 @@ class BotView(APIView):
                         # in api.ai, the leading / gets stripped
                         # Occasionally check if this is resolved
                         # https://discuss.api.ai/t/slashes-are-removed/5595
-                        if parameters['path'] in parser.paths:
+                        if parameters['path'] in parser.specification['paths']:
                             path = parameters['path']
-                        elif '/' + parameters['path'] in parser.paths:
+                        elif '/' + parameters['path'] in parser.specification['paths']:
                             path = '/' + parameters['path']
 
                         output_data['displayText'] = _('Here is the path definition for *{0}*:\n{1}').format(
                             path,
-                            pprint.pformat(parser.paths[path]),
+                            pprint.pformat(parser.specification['paths'][path]),
                         )
 
-                        output_data['displayText'] = pprint.pformat(parser.paths[path])
+                        output_data['displayText'] = pprint.pformat(parser.specification['paths'][path])
 
                     except KeyError:
                         output_data['displayText'] = not_defined_msg
