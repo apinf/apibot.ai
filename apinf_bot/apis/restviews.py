@@ -482,7 +482,7 @@ class BotView(APIView):
                             'text': _('Here is the object definition for *{0}*:\n{1}\n\nI also found these operations linked to it:\n{2}').format(
                                 parameters['object'],
                                 pprint.pformat(definition),
-                                '\n'.join(operations.keys()),
+                                '\n'.join(operation['value'] for operation in operations),
                             ),
                             'attachments': [attachments, ],
                         }
@@ -493,7 +493,7 @@ class BotView(APIView):
                         output_data['data'] = data_response
 
                         # And display text
-                        output_data['displayText'] = '\n'.join(operations.keys())
+                        output_data['displayText'] = '\n'.join(operation['value'] for operation in operations)
                     elif(definition):
                         output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
                             parameters['object'],
