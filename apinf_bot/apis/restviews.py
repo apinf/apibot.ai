@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals
 # TODO
 # v Output formatting of dictionaries
 # v Descriptions have words split over lines
-# - when no operationId available, button does not work
+# v when no operationId available, button does not work
 # - create new API fails
 # - Split code into functions to make it more readable
 # - Security definitions
@@ -176,8 +176,8 @@ class BotView(APIView):
                                     swaggerfile=url,
                                 )
                                 output_data['displayText'] = _('New API added, thanks!')
-                            except Exception:
-                                output_data['displayText'] = _('The URL does not point to a valid Swagger 2.0 file.')
+                            except Exception, e:
+                                output_data['displayText'] = _(e)
                 except KeyError:
                     output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
