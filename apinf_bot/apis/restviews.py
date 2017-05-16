@@ -387,13 +387,13 @@ class BotView(APIView):
                             # Show method and path instead
                             if('operationId' in parser.specification['paths'][path][method]):
                                 operation = {
-                                    type: 'operation',
-                                    value: parser.specification['paths'][path][method]['operationId'],
+                                    'type': 'operation',
+                                    'value': parser.specification['paths'][path][method]['operationId'],
                                 }
                             else:
                                 operation = {
-                                    type: 'path',
-                                    value: _('{0} {1}').format(method.upper(), path, ),
+                                    'type': 'path',
+                                    'value': _('{0} {1}').format(method.upper(), path, ),
                                 }
 
                             # Do we have tags referencing the object?
