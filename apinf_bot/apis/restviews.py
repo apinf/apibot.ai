@@ -2,8 +2,10 @@
 from __future__ import absolute_import, unicode_literals
 
 # TODO
-# - Output formatting of dictionaries
-# - Descriptions have words split over lines
+# v Output formatting of dictionaries
+# v Descriptions have words split over lines
+# - when no operationId available, button does not work
+# - create new API fails
 # - Split code into functions to make it more readable
 # - Security definitions
 import pprint
@@ -11,7 +13,8 @@ import re
 
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import URLValidator
 
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -139,13 +142,21 @@ class BotView(APIView):
             # Add a new API
             ###############
             elif action == 'api.create':
-                # Check for existing APIs first
                 try:
+                    # Do we have a valid URL?
+                    validate_url = URLValidator()
+                    try:
+                        validate_url(parameters['url'])
+                        url = parameters['url']
+                    # The http got stripped out
+                    except ValidationError:
+                        url = 'http://{0}'.format(parameters['url'])
+
                     # API with same name exists
                     if(queryset.filter(name=parameters['api'])):
                         output_data['displayText'] = _('An API with this name already exists!')
                     # API with same URL exists
-                    elif(queryset.filter(swaggerfile=parameters['url'])):
+                    elif(queryset.filter(swaggerfile=url)):
                         output_data['displayText'] = _('An API pointing to this URL already exists!')
                     # Create new API
                     else:
@@ -153,11 +164,11 @@ class BotView(APIView):
                         try:
                             # Validate the JSON file. Will throw an exception
                             # if the file is not valid
-                            validate_spec_url(parameters['url'])
+                            validate_spec_url(url)
                             # Create new API
                             Swagger.objects.create(
                                 name=parameters['api'],
-                                swaggerfile=parameters['url'],
+                                swaggerfile=url,
                             )
                             output_data['displayText'] = _('New API added, thanks!')
                         except Exception:
