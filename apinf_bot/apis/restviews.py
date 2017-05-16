@@ -150,29 +150,34 @@ class BotView(APIView):
                         url = parameters['url']
                     # The http got stripped out
                     except ValidationError:
-                        url = 'http://{0}'.format(parameters['url'])
-
-                    # API with same name exists
-                    if(queryset.filter(name=parameters['api'])):
-                        output_data['displayText'] = _('An API with this name already exists!')
-                    # API with same URL exists
-                    elif(queryset.filter(swaggerfile=url)):
-                        output_data['displayText'] = _('An API pointing to this URL already exists!')
-                    # Create new API
-                    else:
-                        # Validate the URL that it is a Swagger 2.0 file
                         try:
-                            # Validate the JSON file. Will throw an exception
-                            # if the file is not valid
-                            validate_spec_url(url)
-                            # Create new API
-                            Swagger.objects.create(
-                                name=parameters['api'],
-                                swaggerfile=url,
-                            )
-                            output_data['displayText'] = _('New API added, thanks!')
-                        except Exception:
-                            output_data['displayText'] = _('The URL does not point to a valid Swagger 2.0 file.')
+                            validate_url('http://{0}'.format(parameters['url']))
+                            url = 'http://{0}'.format(parameters['url'])
+                        except ValidationError:
+                            output_data['displayText'] = _('This is an invalid URL!')
+
+                    if(url):
+                        # API with same name exists
+                        if(queryset.filter(name=parameters['api'])):
+                            output_data['displayText'] = _('An API with this name already exists!')
+                        # API with same URL exists
+                        elif(queryset.filter(swaggerfile=url)):
+                            output_data['displayText'] = _('An API pointing to this URL already exists!')
+                        # Create new API
+                        else:
+                            # Validate the URL that it is a Swagger 2.0 file
+                            try:
+                                # Validate the JSON file. Will throw an exception
+                                # if the file is not valid
+                                validate_spec_url(url)
+                                # Create new API
+                                Swagger.objects.create(
+                                    name=parameters['api'],
+                                    swaggerfile=url,
+                                )
+                                output_data['displayText'] = _('New API added, thanks!')
+                            except Exception:
+                                output_data['displayText'] = _('The URL does not point to a valid Swagger 2.0 file.')
                 except KeyError:
                     output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
@@ -374,34 +379,43 @@ class BotView(APIView):
                     # 3. Check for paths containing the same name - regex
                     # 4. Check for operations containing the same name - regex
 
-                    operations = {}
+                    operations = []
 
                     for path in parser.specification['paths']:
                         for method in parser.specification['paths'][path]:
                             # Sometimes we don't have the operationID defined
                             # Show method and path instead
                             if('operationId' in parser.specification['paths'][path][method]):
-                                operation = parser.specification['paths'][path][method]['operationId']
+                                operation = {
+                                    type: 'operation',
+                                    value: parser.specification['paths'][path][method]['operationId'],
+                                }
                             else:
-                                operation = _('{0} {1}').format(
-                                    method.upper(),
-                                    path,
-                                )
+                                operation = {
+                                    type: 'path',
+                                    value: _('{0} {1}').format(method.upper(), path, ),
+                                }
 
                             # Do we have tags referencing the object?
                             if('tags' in parser.specification['paths'][path][method]):
                                 if(parameters['object'].lower() in [tag.lower() for tag in parser.specification['paths'][path][method]['tags']]):
-                                    operations[operation] = {path, method}
+                                    operation['path'] = path
+                                    operation['method'] = method
+                                    operations.append(operation)
                                     break
 
                             # Do we have the name of the object in the path somewhere?
                             if(parameters['object'].lower() in path):
-                                operations[operation] = {path, method}
+                                operation['path'] = path
+                                operation['method'] = method
+                                operations.append(operation)
                                 break
 
                             # Do we have the name of the object in the operation name somewhere?
                             if(parameters['object'].lower() in operation):
-                                operations[operation] = {path, method}
+                                operation['path'] = path
+                                operation['method'] = method
+                                operations.append(operation)
                                 break
 
                             # Do we have input parameters referencing the object? e.g. PUT or POST methods
@@ -412,7 +426,9 @@ class BotView(APIView):
                                         match = re.match(r'#/definitions/(\w+)', parameter['schema']['$ref'])
                                         # Does the object match the input from user?
                                         if(match and match.group(1).lower() == parameters['object'].lower()):
-                                            operations[operation] = {path, method}
+                                            operation['path'] = path
+                                            operation['method'] = method
+                                            operations.append(operation)
                                             break
                                     except Exception:
                                         pass
@@ -427,14 +443,18 @@ class BotView(APIView):
                                                 match = re.match(r'#/definitions/(\w+)', parser.specification['paths'][path][method]['responses'][status_code]['schema']['items']['$ref'])
                                                 # Does the object match the input from user?
                                                 if(match and match.group(1).lower() == parameters['object'].lower()):
-                                                    operations[operation] = {path, method}
+                                                    operation['path'] = path
+                                                    operation['method'] = method
+                                                    operations.append(operation)
                                                     break
                                             # In case of a single item
                                             else:
                                                 match = re.match(r'#/definitions/(\w+)', parser.specification['paths'][path][method]['responses'][status_code]['schema']['$ref'])
                                                 # Does the object match the input from user?
                                                 if(match and match.group(1).lower() == parameters['object'].lower()):
-                                                    operations[operation] = {path, method}
+                                                    operation['path'] = path
+                                                    operation['method'] = method
+                                                    operations.append(operation)
                                                     break
 
                                 except Exception:
@@ -446,9 +466,9 @@ class BotView(APIView):
 
                         for operation in operations:
                             actions.append({
-                                    'name': operation,
-                                    'text': operation,
-                                    'value': _('Explain operation {0}').format(operation),
+                                    'name': operation['value'],
+                                    'text': operation['value'],
+                                    'value': _('Explain {0} {1}').format(operation['type'], operation['value'] if operation['type'] == 'operation' else operation['path']),
                                 }
                             )
 
