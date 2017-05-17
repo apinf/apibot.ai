@@ -177,7 +177,7 @@ class BotView(APIView):
                                 )
                                 output_data['displayText'] = _('New API added, thanks!')
                             except Exception as e:
-                                output_data['displayText'] = _(e)
+                                output_data['displayText'] = _(str(e))
                 except KeyError:
                     output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
