@@ -35,7 +35,7 @@ class SwaggerSerializer(ModelSerializer):
 # Incoming requests
 class BotParametersSerializer(Serializer):
     api = CharField(required=False, allow_blank=True, max_length=100)
-    api = CharField(required=False, allow_blank=True, max_length=100)
+    apioriginal = CharField(required=False, allow_blank=True, max_length=100)
     object = CharField(required=False, allow_blank=True, max_length=100)
     operation = CharField(required=False, allow_blank=True, max_length=100)
     path = CharField(required=False, allow_blank=True, max_length=255)
@@ -43,6 +43,7 @@ class BotParametersSerializer(Serializer):
     method = CharField(required=False, allow_blank=True, max_length=10)
     endpoint = CharField(required=False, allow_blank=True, max_length=100)
     url = CharField(required=False, allow_blank=True, max_length=255)
+    urloriginal = CharField(required=False, allow_blank=True, max_length=255)
 
 
 class BotMetadataSerializer(Serializer):
@@ -118,7 +119,6 @@ class SLActionsSerializer(Serializer):
     value = CharField(required=False)
 
 
-
 class SLAttachmentsSerializer(Serializer):
     text = CharField(required=False)
     fallback = CharField(required=False)
@@ -142,6 +142,7 @@ class SLAttachmentsListSerializer(Serializer):
 class DataSerializer(Serializer):
     slack = SLAttachmentsListSerializer(required=False)
     facebook = FBQuickRepliesListSerializer(required=False)
+
 
 class BotResponseSerializer(Serializer):
     speech = CharField()

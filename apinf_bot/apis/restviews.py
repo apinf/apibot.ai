@@ -144,10 +144,14 @@ class BotView(APIView):
             ###############
             elif action == 'api.create':
                 try:
+                    # TODO
                     # Bugfix
                     # we lose the http(s):// from Slack input
                     # verify and add it if necessary
-                    url = ''
+
+                    # This is ugly - no way out to get a serializer field name
+                    # with a dot in the name
+                    url = request.data['result']['contexts'][0]['parameters']['url.original']
                     if url_is_alive(parameters['url']):
                         url = parameters['url']
                     elif url_is_alive('http://' + parameters['url']):
