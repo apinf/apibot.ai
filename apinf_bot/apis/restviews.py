@@ -349,8 +349,8 @@ class BotView(APIView):
 
                 except ObjectDoesNotExist:
                     output_data['displayText'] = no_api_msg
-                except Exception:
-                    output_data['displayText'] = generic_error_msg
+                except Exception as e:
+                    output_data['displayText'] = str(e)
 
             # Object definitions for specific API
             #####################################
