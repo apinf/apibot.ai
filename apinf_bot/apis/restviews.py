@@ -148,6 +148,7 @@ class BotView(APIView):
                     # we lose the http(s):// from Slack input
                     # verify and add it if necessary
                     url = ''
+                    import pdb; pdb.set_trace()
                     if url_is_alive(parameters['url']):
                         url = parameters['url']
                     elif url_is_alive('http://' + parameters['url']):
@@ -155,7 +156,7 @@ class BotView(APIView):
                     elif url_is_alive('https://' + parameters['url']):
                         url = 'https://' + parameters['url']
                     else:
-                        output_data['displayText'] = _('This is an invalid URL!')
+                        output_data['displayText'] = _('{0} - This is an invalid URL!').format(parameters['url'])
 
                     # # Do we have a valid URL?
                     # validate_url = URLValidator()
@@ -349,9 +350,10 @@ class BotView(APIView):
 
                 except ObjectDoesNotExist:
                     output_data['displayText'] = no_api_msg
+                # except Exception:
+                #     output_data['displayText'] = generic_error_msg
                 except Exception as e:
                     output_data['displayText'] = str(e)
-
             # Object definitions for specific API
             #####################################
             elif action == 'api.object-definition':
