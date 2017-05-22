@@ -160,7 +160,7 @@ class BotView(APIView):
                         url = 'http://' + request_url
 
                     else:
-                        output_data['displayText'] = _('{0} - This is an invalid URL!').format(parameters['url'])
+                        output_data['displayText'] = _('{0} - This is an invalid URL!').format(request_url)
 
                     # # Do we have a valid URL?
                     # validate_url = URLValidator()
