@@ -148,7 +148,6 @@ class BotView(APIView):
                     # we lose the http(s):// from Slack input
                     # verify and add it if necessary
                     url = ''
-                    import pdb; pdb.set_trace()
                     if url_is_alive(parameters['url']):
                         url = parameters['url']
                     elif url_is_alive('http://' + parameters['url']):
