@@ -40,6 +40,7 @@ from .lists import (
     general_data,
     swagger_fields,
 )
+from ..utils.utils import url_is_alive
 
 
 class SwaggerViewSet(ModelViewSet):
@@ -143,18 +144,31 @@ class BotView(APIView):
             ###############
             elif action == 'api.create':
                 try:
-                    # Do we have a valid URL?
-                    validate_url = URLValidator()
-                    try:
-                        validate_url(parameters['url'])
+                    # Bugfix
+                    # we lose the http(s):// from Slack input
+                    # verify and add it if necessary
+                    url = ''
+                    if url_is_alive(parameters['url']):
                         url = parameters['url']
-                    # The http got stripped out
-                    except ValidationError:
-                        try:
-                            validate_url('http://{0}'.format(parameters['url']))
-                            url = 'http://{0}'.format(parameters['url'])
-                        except ValidationError:
-                            output_data['displayText'] = _('This is an invalid URL!')
+                    elif url_is_alive('http://' + parameters['url']):
+                        url = 'http://' + parameters['url']
+                    elif url_is_alive('https://' + parameters['url']):
+                        url = 'https://' + parameters['url']
+                    else:
+                        output_data['displayText'] = _('This is an invalid URL!')
+
+                    # # Do we have a valid URL?
+                    # validate_url = URLValidator()
+                    # try:
+                    #     validate_url(parameters['url'])
+                    #     url = parameters['url']
+                    # # The http got stripped out
+                    # except ValidationError:
+                    #     try:
+                    #         validate_url('http://{0}'.format(parameters['url']))
+                    #         url = 'http://{0}'.format(parameters['url'])
+                    #     except ValidationError:
+                    #         output_data['displayText'] = _('This is an invalid URL!')
 
                     if(url):
                         # API with same name exists
@@ -176,8 +190,8 @@ class BotView(APIView):
                                     swaggerfile=url,
                                 )
                                 output_data['displayText'] = _('New API added, thanks!')
-                            except Exception as e:
-                                output_data['displayText'] = _('{0} - {1}', format(str(e), parameters['url']))
+                            except:
+                                output_data['displayText'] = _('This is not a valid Swagger 2.0 file.')
                 except KeyError:
                     output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
