@@ -151,13 +151,14 @@ class BotView(APIView):
 
                     # This is ugly - no way out to get a serializer field name
                     # with a dot in the name
-                    url = request.data['result']['contexts'][0]['parameters']['url.original']
-                    if url_is_alive(parameters['url']):
-                        url = parameters['url']
-                    elif url_is_alive('http://' + parameters['url']):
-                        url = 'http://' + parameters['url']
-                    elif url_is_alive('https://' + parameters['url']):
-                        url = 'https://' + parameters['url']
+                    request_url = request.data['result']['contexts'][0]['parameters']['url.original']
+                    if url_is_alive(request_url):
+                        url = request_url
+                    elif url_is_alive('https://' + request_url):
+                        url = 'https://' + request_url
+                    elif url_is_alive('http://' + request_url):
+                        url = 'http://' + request_url
+
                     else:
                         output_data['displayText'] = _('{0} - This is an invalid URL!').format(parameters['url'])
 
