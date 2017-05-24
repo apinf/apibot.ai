@@ -44,6 +44,7 @@ class BotParametersSerializer(Serializer):
     endpoint = CharField(required=False, allow_blank=True, max_length=100)
     url = CharField(required=False, allow_blank=True, max_length=255)
     urloriginal = CharField(required=False, allow_blank=True, max_length=255)
+    feedback = CharField(required=False, allow_blank=True)
 
 
 class BotMetadataSerializer(Serializer):

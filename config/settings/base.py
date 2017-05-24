@@ -66,6 +66,7 @@ LOCAL_APPS = [
     # 'apinf_bot.users.apps.UsersConfig',
     # Your stuff: custom apps go here
     'apinf_bot.apis',
+    'apinf_bot.feedback',
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

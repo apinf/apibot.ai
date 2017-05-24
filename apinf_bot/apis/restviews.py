@@ -41,6 +41,7 @@ from .lists import (
     swagger_fields,
 )
 from ..utils.utils import url_is_alive
+from ..feedback.models import Feedback
 
 
 class SwaggerViewSet(ModelViewSet):
@@ -79,6 +80,15 @@ class BotView(APIView):
         """
         try:
             return Swagger.objects.get(name__icontains=api).parse_swaggerfile()
+        except Exception:
+            return None
+
+    def get_username(self, parameters):
+        """
+        Get the username
+        """
+        try:
+            return parameters['slack_user_id']
         except Exception:
             return None
 
@@ -578,6 +588,21 @@ class BotView(APIView):
                 except Exception:
                     output_data['displayText'] = generic_error_msg
 
+
+            # Create feedback
+            #################
+            elif action == 'feedback.create':
+                try:
+                    username = self.get_username(parameters)
+                    Feedback.objects.create(
+                        username=username,
+                        # feedback=parameters['feedback'],
+                        feedback=str(request.__dict__),
+                    )
+                    output_data['displayText'] = _('Feedback received, thanks!')
+
+                except Exception:
+                    output_data['displayText'] = generic_error_msg
 
 # TODO
 # "securityDefinitions"
