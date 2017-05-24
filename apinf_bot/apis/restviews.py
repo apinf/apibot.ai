@@ -601,8 +601,8 @@ class BotView(APIView):
                     )
                     output_data['displayText'] = _('Feedback received, thanks!')
 
-                except Exception:
-                    output_data['displayText'] = generic_error_msg
+                except Exception as e:
+                    output_data['displayText'] = str(e)
 
 # TODO
 # "securityDefinitions"
