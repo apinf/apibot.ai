@@ -83,12 +83,33 @@ class BotView(APIView):
         except Exception:
             return None
 
-    def get_username(self, parameters):
+    def get_username(self, request):
         """
         Get the username
+  '_data': {
+    'originalRequest': {
+      'source': 'slack',
+      'data': {
+        'authed_users': ['U4U34AUAV'],
+        'event_id': 'Ev5H863TT5',
+        'api_app_id': 'A4UP0QB5G',
+        'team_id': 'T4MGCHKHT',
+        'event': {
+          'event_ts': '1495636170.864842',
+          'channel': 'D4URQ7PM3',
+          'text': 'foobar',
+          'type': 'message',
+          'user': 'U4LP8FRA5',
+          'ts': '1495636170.864842'
+        },
+        'type': 'event_callback',
+        'event_time': 1495636170,
+        'token': 'r4WROXaw0zGUoDArOKDf1vbG'
+      }
+    },
         """
         try:
-            return parameters['slack_user_id']
+            return request['_data']['originalRequest']['data']['authed_users'][0]
         except Exception:
             return None
 
@@ -593,7 +614,7 @@ class BotView(APIView):
             #################
             elif action == 'feedback.create':
                 try:
-                    username = self.get_username(parameters)
+                    username = self.get_username(request)
                     Feedback.objects.create(
                         username=username,
                         # feedback=parameters['feedback'],
@@ -601,8 +622,8 @@ class BotView(APIView):
                     )
                     output_data['displayText'] = _('Feedback received, thanks!')
 
-                except Exception as e:
-                    output_data['displayText'] = str(e)
+                except Exception:
+                    output_data['displayText'] = generic_error_msg
 
 # TODO
 # "securityDefinitions"
