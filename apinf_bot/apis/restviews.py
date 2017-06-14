@@ -86,27 +86,27 @@ class BotView(APIView):
     def get_username(self, request):
         """
         Get the username
-  '_data': {
-    'originalRequest': {
-      'source': 'slack',
-      'data': {
-        'authed_users': ['U4U34AUAV'],
-        'event_id': 'Ev5H863TT5',
-        'api_app_id': 'A4UP0QB5G',
-        'team_id': 'T4MGCHKHT',
-        'event': {
-          'event_ts': '1495636170.864842',
-          'channel': 'D4URQ7PM3',
-          'text': 'foobar',
-          'type': 'message',
-          'user': 'U4LP8FRA5',
-          'ts': '1495636170.864842'
-        },
-        'type': 'event_callback',
-        'event_time': 1495636170,
-        'token': 'r4WROXaw0zGUoDArOKDf1vbG'
-      }
-    },
+        '_data': {
+          'originalRequest': {
+            'source': 'slack',
+            'data': {
+              'authed_users': ['U4U34AUAV'],
+              'event_id': 'Ev5H863TT5',
+              'api_app_id': 'A4UP0QB5G',
+              'team_id': 'T4MGCHKHT',
+              'event': {
+                'event_ts': '1495636170.864842',
+                'channel': 'D4URQ7PM3',
+                'text': 'foobar',
+                'type': 'message',
+                'user': 'U4LP8FRA5',
+                'ts': '1495636170.864842'
+              },
+              'type': 'event_callback',
+              'event_time': 1495636170,
+              'token': 'r4WROXaw0zGUoDArOKDf1vbG'
+            }
+          },
         """
         try:
             return request['_data']['originalRequest']['data']['authed_users'][0]
@@ -617,8 +617,8 @@ class BotView(APIView):
                     username = self.get_username(request)
                     Feedback.objects.create(
                         username=username,
-                        # feedback=parameters['feedback'],
-                        feedback=str(request.__dict__),
+                        feedback=parameters['feedback'],
+                        # feedback=str(request.__dict__),
                     )
                     output_data['displayText'] = _('Feedback received, thanks!')
 
