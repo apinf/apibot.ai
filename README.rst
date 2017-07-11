@@ -1,3 +1,16 @@
+.. image:: https://codeclimate.com/github/apinf/apibot.ai/badges/gpa.svg
+   :target: https://codeclimate.com/github/apinf/apibot.ai
+   :alt: Code Climate
+
+.. image:: https://codeclimate.com/github/apinf/apibot.ai/badges/coverage.svg
+   :target: https://codeclimate.com/github/apinf/apibot.ai/coverage
+   :alt: Test Coverage
+
+.. image:: https://codeclimate.com/github/apinf/apibot.ai/badges/issue_count.svg
+   :target: https://codeclimate.com/github/apinf/apibot.ai
+   :alt: Issue Count
+
+
 Apinf bot
 =========
 
