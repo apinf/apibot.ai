@@ -1,7 +1,9 @@
 # Test dependencies go here.
 -r base.txt
 
-
+# auto clean for flake7
+autoflake==0.7
+autopep8==1.3.2
 
 coverage==4.4.1
 flake8==3.3.0 # pyup: != 2.6.0
