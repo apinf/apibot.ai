@@ -25,9 +25,6 @@ urlpatterns += [
 ]
 
 
-
-
-
 #
 # urlpatterns = [
 #
