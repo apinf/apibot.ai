@@ -10,6 +10,9 @@
    :target: https://codeclimate.com/github/apinf/apibot.ai
    :alt: Issue Count
 
+.. image:: https://travis-ci.org/apinf/apibot.ai.svg?branch=develop
+    :target: https://travis-ci.org/apinf/apibot.ai
+
 apibot
 ======
 
