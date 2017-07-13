@@ -1,0 +1,58 @@
+version: '2'
+
+volumes:
+  postgres_data: {}
+  postgres_backup: {}
+
+services:
+  postgres:
+    build: ./compose/postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_backup:/backups
+    env_file: .env
+
+  django:
+    build:
+      context: .
+      dockerfile: ./compose/django/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    command: /gunicorn.sh
+    env_file: .env
+
+  nginx:
+    build: ./compose/nginx
+    depends_on:
+      - django
+
+      - certbot
+    environment:
+      - MY_DOMAIN_NAME=bot.apibot.ai
+
+    ports:
+      - "0.0.0.0:80:80"
+
+      - "0.0.0.0:443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+
+  certbot:
+    image: quay.io/letsencrypt/letsencrypt
+    command: bash -c "sleep 6 && certbot certonly -n --standalone -d bot.apibot.ai --test --agree-tos --email mauricio.vieira@apinf.io --server https://acme-v01.api.letsencrypt.org/directory --rsa-key-size 4096 --verbose --keep-until-expiring --preferred-challenges http-01"
+    entrypoint: ""
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+    ports:
+      - "80"
+      - "443"
+    environment:
+      - TERM=xterm
+
+
+  redis:
+    image: redis:3.0
+

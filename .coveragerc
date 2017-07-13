@@ -1,5 +1,5 @@
 [run]
-include = apinf_bot/*
+include = apibot/*
 omit = *migrations*, *tests*
 plugins =
     django_coverage_plugin
