@@ -6,7 +6,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     CharField,
     IntegerField,
-    URLField,
+    #    URLField,
     BooleanField,
     ListField,
     DictField,

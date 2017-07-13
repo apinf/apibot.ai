@@ -10,4 +10,3 @@ class UsersConfig(AppConfig):
             Users system checks
             Users signal registration
         """
-        pass
