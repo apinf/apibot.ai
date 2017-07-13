@@ -20,4 +20,10 @@ if __name__ == '__main__':
                 "forget to activate a virtual environment?"
             )
         raise
+
+    # This allows easy placement of apps within the interior
+    # apibot directory.
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(os.path.join(current_path, 'apibot'))
+
     execute_from_command_line(sys.argv)
