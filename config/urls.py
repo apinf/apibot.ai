@@ -1,25 +1,24 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.conf import settings
 from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic import TemplateView
 from django.views import defaults as default_views
+
 api_patterns = [
-    url(r'^apis/', include('apibot.apis.urls')),
+    url(r'^apis/', include('apinf_bot.apis.urls')),
 
 ]
-urlpatterns = [
- #   url(r'^$', TemplateView.as_view(template_name='pages/home.html'), name='home'),
- #   url(r'^about/$', TemplateView.as_view(template_name='pages/about.html'), name='about'),
 
+urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
     url(settings.ADMIN_URL, admin.site.urls),
 
     # User management
-    url(r'^users/', include('apibot.users.urls', namespace='users')),
     url(r'^accounts/', include('allauth.urls')),
-
-    # Your stuff: custom urls includes go here
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
     url(r'^api/v1/', include(api_patterns)),
@@ -37,6 +36,7 @@ if settings.DEBUG:
     ]
     if 'debug_toolbar' in settings.INSTALLED_APPS:
         import debug_toolbar
-        urlpatterns = [
+
+        urlpatterns += [
             url(r'^__debug__/', include(debug_toolbar.urls)),
-        ] + urlpatterns
+        ]

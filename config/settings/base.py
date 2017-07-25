@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Django settings for apibot project.
+Django settings for Apinf bot project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/dev/topics/settings/
@@ -7,10 +8,12 @@ https://docs.djangoproject.com/en/dev/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/dev/ref/settings/
 """
+from __future__ import absolute_import, unicode_literals
+
 import environ
 
-ROOT_DIR = environ.Path(__file__) - 3  # (apibot/config/settings/base.py - 3 = apibot/)
-APPS_DIR = ROOT_DIR.path('apibot')
+ROOT_DIR = environ.Path(__file__) - 3  # (apinf_bot/config/settings/base.py - 3 = apinf_bot/)
+APPS_DIR = ROOT_DIR.path('apinf_bot')
 
 # Load operating system environment variables and then prepare to use them
 env = environ.Env()
@@ -45,7 +48,7 @@ DJANGO_APPS = [
     'django.contrib.admin',
 ]
 THIRD_PARTY_APPS = [
-
+    'django_extensions',
     'allauth',  # registration
     'allauth.account',  # registration
     'allauth.socialaccount',  # registration
@@ -53,14 +56,16 @@ THIRD_PARTY_APPS = [
     # REST
     'rest_framework',
     'rest_framework.authtoken',
+    # 'rest_auth',
+    # 'rest_auth.registration',
 ]
 
 # Apps specific for this project go here.
 LOCAL_APPS = [
     # custom users app
-    # 'apibot.users.apps.UsersConfig',
+    # 'apinf_bot.users.apps.UsersConfig',
     # Your stuff: custom apps go here
-    'apibot.apis'
+    'apinf_bot.apis',
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -81,7 +86,7 @@ MIDDLEWARE = [
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
 MIGRATION_MODULES = {
-    'sites': 'apibot.contrib.sites.migrations'
+    'sites': 'apinf_bot.contrib.sites.migrations'
 }
 
 # DEBUG
@@ -104,7 +109,7 @@ EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.s
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = [
-    ("""APInf Oy""", 'mauricio.vieira@apinf.io'),
+    ("""Philippe Luickx""", 'philippe.luickx@apinf.io'),
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#managers
@@ -114,7 +119,7 @@ MANAGERS = ADMINS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgres:///apibot'),
+    'default': env.db('DJANGO_DATABASE_URL', default='postgres:///apinf_bot'),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
@@ -178,6 +183,8 @@ TEMPLATES = [
     },
 ]
 
+# See: http://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
+# CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # STATIC FILE CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -256,18 +263,14 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 ACCOUNT_ALLOW_REGISTRATION = env.bool('DJANGO_ACCOUNT_ALLOW_REGISTRATION', True)
-# ACCOUNT_ADAPTER = 'apibot.users.adapters.AccountAdapter'
-# SOCIALACCOUNT_ADAPTER = 'apibot.users.adapters.SocialAccountAdapter'
+# ACCOUNT_ADAPTER = 'apinf_bot.users.adapters.AccountAdapter'
+# SOCIALACCOUNT_ADAPTER = 'apinf_bot.users.adapters.SocialAccountAdapter'
 
 # Custom user app defaults
 # Select the correct user model
 # AUTH_USER_MODEL = 'users.User'
 # LOGIN_REDIRECT_URL = 'users:redirect'
 LOGIN_URL = 'account_login'
-
-# SLUGLIFIER
-# AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'
-
 
 # Location of root django.contrib.admin URL, use {% url 'admin:index' %}
 ADMIN_URL = r'^admin/'

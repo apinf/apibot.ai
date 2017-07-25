@@ -10,17 +10,18 @@
    :target: https://codeclimate.com/github/apinf/apibot.ai
    :alt: Issue Count
 
-apibot
-======
 
-API bot management by APInf.
+Apinf bot
+=========
+
+A chatbot to get docs about specific APIs
 
 .. image:: https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg
      :target: https://github.com/pydanny/cookiecutter-django/
      :alt: Built with Cookiecutter Django
 
 
-:License: EUPL-1.1
+:License: MIT
 
 
 Settings
@@ -86,13 +87,12 @@ Deployment
 The following details how to deploy this application.
 
 
-
-Docker
+Heroku
 ^^^^^^
 
-See detailed `cookiecutter-django Docker documentation`_.
+See detailed `cookiecutter-django Heroku documentation`_.
 
-.. _`cookiecutter-django Docker documentation`: http://cookiecutter-django.readthedocs.io/en/latest/deployment-with-docker.html
+.. _`cookiecutter-django Heroku documentation`: http://cookiecutter-django.readthedocs.io/en/latest/deployment-on-heroku.html
 
 
 
