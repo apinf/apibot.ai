@@ -1,2 +1,0 @@
-# CI dependencies go here.
--r local.txt
