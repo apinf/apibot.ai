@@ -57,3 +57,5 @@ djangorestframework==3.6.3
 #swagger-parser==0.1.11
 -e git+https://github.com/philippeluickx/swagger-parser.git@422f949b04c952ae582ce6c8fc8b229337d04827#egg=swagger-parser
 
+# Django extensions
+django-extensions==1.8.1
