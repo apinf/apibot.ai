@@ -12,7 +12,9 @@ import pprint
 import re
 
 from django.utils.translation import ugettext_lazy as _
-from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import URLValidator
 
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -26,12 +28,12 @@ from .serializers import (
     SwaggerSerializer,
     BotSerializer,
     BotResponseSerializer,
-    #    FBQuickRepliesSerializer,
-    #    FBQuickRepliesListSerializer,
-    #    DataSerializer,
-    #    SLActionsSerializer,
-    #    SLAttachmentsSerializer,
-    #    SLAttachmentsListSerializer,
+    FBQuickRepliesSerializer,
+    FBQuickRepliesListSerializer,
+    DataSerializer,
+    SLActionsSerializer,
+    SLAttachmentsSerializer,
+    SLAttachmentsListSerializer,
 )
 from .lists import (
     info_fields,
@@ -61,7 +63,6 @@ class BotView(APIView):
     * https://docs.api.ai/docs/query#post-query
     * https://docs.api.ai/docs/webhook#webhook-example
     """
-
     def get_api(self, parameters, contexts):
         if 'api' in parameters:
             return parameters['api']
@@ -85,11 +86,9 @@ class BotView(APIView):
         # Some docs:
         # Slack
         # Basic formatting: https://api.slack.com/docs/message-formatting
-        generic_error_msg = _(
-            'Something went wrong here... I will tell the developers and hopefully they will manage to fix this.')
+        generic_error_msg = _('Something went wrong here... I will tell the developers and hopefully they will manage to fix this.')
         not_existing_msg = _('This information is not defined in the Swagger file. Sorry!')
-        not_defined_msg = _(
-            'This data is not part of the OpenAPI specifications: https://github.com/OAI/OpenAPI-Specification')
+        not_defined_msg = _('This data is not part of the OpenAPI specifications: https://github.com/OAI/OpenAPI-Specification')
         no_api_msg = _('We do not have information about this API. Feel free to add it yourself!')
 
         serializer = BotSerializer(data=request.data)
@@ -102,14 +101,14 @@ class BotView(APIView):
             # Parse some of the input from api.ai
             parameters = serializer.validated_data['result']['parameters']
             contexts = serializer.validated_data['result']['contexts']
-            # metadata = serializer.validated_data['result']['metadata']
+            metadata = serializer.validated_data['result']['metadata']
             action = serializer.validated_data['result']['action']
 
             # Check what type of data we need to return
 
             # List all APIs
             ###############
-            if action == 'api.list':
+            if  action == 'api.list':
                 api_list = queryset.values_list('name', flat=True).order_by('name')
 
                 # Define buttons for Slack
@@ -117,10 +116,11 @@ class BotView(APIView):
 
                 for api in api_list:
                     actions.append({
-                        'name': api,
-                        'text': api,
-                        'value': _('Use {0}').format(api),
-                    })
+                            'name': api,
+                            'text': api,
+                            'value': _('Use {0}').format(api),
+                        }
+                    )
 
                 attachments = {
                     'text': _('Which API you want to know more about? Here are top APIs:'),
@@ -128,26 +128,17 @@ class BotView(APIView):
                     'callback_id': 'api_list',
                     'actions': actions,
                 }
-
-                attachments_text = _(('\n').join([
-                    'We have these APIs:',
-                    '{0}'.format('\n'.join(api_list)),
-                    'If you want to know more about a certain API, just tell me you want to *use* that one.',
-                    'You can also *create* a new API if you have a URL to a valid Swagger file.',
-                ]))
-
                 attachments_list = {
-                    'text': attachments_text,
+                    'text': _('We have these APIs:\n{0}\nIf you want to know more about a certain API, just tell me you want to *use* that one.\nYou can also *create* a new API if you have a URL to a valid Swagger file.').format('\n'.join(api_list)),
                     'attachments': [attachments, ],
                 }
-
                 data_response = {
                     'slack': attachments_list,
                 }
 
                 output_data['data'] = data_response
 
-                output_data['displayText'] = attachments_text
+                output_data['displayText'] = _('We have these APIs:\n{0}\nIf you want to know more about a certain API, just tell me you want to *use* that one.\nYou can also *create* a new API if you have a URL to a valid Swagger file.').format('\n'.join(api_list))
 
             # Add a new API
             ###############
@@ -169,8 +160,7 @@ class BotView(APIView):
                         url = 'http://' + request_url
 
                     else:
-                        output_data['displayText'] = _(
-                            '{0} - This is an invalid URL!').format(request_url)
+                        output_data['displayText'] = _('{0} - This is an invalid URL!').format(request_url)
 
                     # # Do we have a valid URL?
                     # validate_url = URLValidator()
@@ -191,8 +181,7 @@ class BotView(APIView):
                             output_data['displayText'] = _('An API with this name already exists!')
                         # API with same URL exists
                         elif(queryset.filter(swaggerfile=url)):
-                            output_data['displayText'] = _(
-                                'An API pointing to this URL already exists!')
+                            output_data['displayText'] = _('An API pointing to this URL already exists!')
                         # Create new API
                         else:
                             # Validate the URL that it is a Swagger 2.0 file
@@ -207,11 +196,9 @@ class BotView(APIView):
                                 )
                                 output_data['displayText'] = _('New API added, thanks!')
                             except:
-                                output_data['displayText'] = _(
-                                    'This is not a valid Swagger 2.0 file.')
+                                output_data['displayText'] = _('This is not a valid Swagger 2.0 file.')
                 except KeyError:
-                    output_data['displayText'] = _(
-                        'I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
+                    output_data['displayText'] = _('I need a name and URL pointing to a OpenAPI json specification in order to create a new API.')
 
             # Information about specific API
             ################################
@@ -254,10 +241,10 @@ class BotView(APIView):
 
                                 for path in paths:
                                     actions.append({
-                                        'name': path,
-                                        'text': path,
-                                        'value': _('Explain path {0}').format(path),
-                                    }
+                                            'name': path,
+                                            'text': path,
+                                            'value': _('Explain path {0}').format(path),
+                                        }
                                     )
 
                                 attachments = {
@@ -282,8 +269,7 @@ class BotView(APIView):
                                     '\n'.join(paths)
                                 )
                             else:
-                                output_data['displayText'] = _(
-                                    'There are no paths defined in this OpenAPI specification.')
+                                output_data['displayText'] = _('There are no paths defined in this OpenAPI specification.')
 
                         # List all the operations
                         elif parameters['data'] == 'operations':
@@ -294,10 +280,11 @@ class BotView(APIView):
 
                                 for operation in operations:
                                     actions.append({
-                                        'name': operation,
-                                        'text': operation,
-                                        'value': _('Explain operation {0}').format(operation),
-                                    })
+                                            'name': operation,
+                                            'text': operation,
+                                            'value': _('Explain operation {0}').format(operation),
+                                        }
+                                    )
 
                                 attachments = {
                                     'text': _('Which operation you want to know more about? Here are the top operations:'),
@@ -321,8 +308,7 @@ class BotView(APIView):
                                     '\n'.join(operations)
                                 )
                             else:
-                                output_data['displayText'] = _(
-                                    'There are no operations defined in this OpenAPI specification.')
+                                output_data['displayText'] = _('There are no operations defined in this OpenAPI specification.')
 
                         # List all the objects
                         elif parameters['data'] == 'definitions':
@@ -333,10 +319,10 @@ class BotView(APIView):
 
                                 for definition in definitions:
                                     actions.append({
-                                        'name': definition,
-                                        'text': definition,
-                                        'value': _('Explain object {0}').format(definition),
-                                    }
+                                            'name': definition,
+                                            'text': definition,
+                                            'value': _('Explain object {0}').format(definition),
+                                        }
                                     )
 
                                 attachments = {
@@ -359,8 +345,7 @@ class BotView(APIView):
                                 output_data['displayText'] = '\n'.join(definitions)
                             else:
                                 # And display text
-                                output_data['displayText'] = _(
-                                    'No objects are defined in this OpenAPI specification.')
+                                output_data['displayText'] = _('No objects are defined in this OpenAPI specification.')
 
                     # No idea what they want...
                     # TODO: start logging these so we can analyze
@@ -386,11 +371,9 @@ class BotView(APIView):
                     if(parameters['object'] in parser.specification['definitions']):
                         definition = parser.specification['definitions'][parameters['object']]
                     elif(parameters['object'].lower() in parser.specification['definitions']):
-                        definition = parser.specification['definitions'][parameters['object'].lower(
-                        )]
+                        definition = parser.specification['definitions'][parameters['object'].lower()]
                     else:
-                        definition = parser.specification['definitions'][parameters['object'].title(
-                        )]
+                        definition = parser.specification['definitions'][parameters['object'].title()]
 
                     # Are there linked operations to this object?
                     # TODO
@@ -460,8 +443,7 @@ class BotView(APIView):
                                 for parameter in parser.specification['paths'][path][method]['parameters']:
                                     # Regex the object out
                                     try:
-                                        match = re.match(r'#/definitions/(\w+)',
-                                                         parameter['schema']['$ref'])
+                                        match = re.match(r'#/definitions/(\w+)', parameter['schema']['$ref'])
                                         # Does the object match the input from user?
                                         if(match and match.group(1).lower() == parameters['object'].lower()):
                                             operation['path'] = path
@@ -474,13 +456,11 @@ class BotView(APIView):
                             # Do we have responses referencing the object? e.g. GET methods
                             if('responses' in parser.specification['paths'][path][method]):
                                 try:
-                                    responses = parser.specification['paths'][path][method]['responses']
-                                    for status_code in responses:
-                                        if('schema' in responses[status_code]):
+                                    for status_code in parser.specification['paths'][path][method]['responses']:
+                                        if('schema' in parser.specification['paths'][path][method]['responses'][status_code]):
                                             # In case of a list of objects
-                                            if('items' in responses[status_code]['schema']):
-                                                match = re.match(
-                                                    r'#/definitions/(\w+)', responses[status_code]['schema']['items']['$ref'])
+                                            if('items' in parser.specification['paths'][path][method]['responses'][status_code]['schema']):
+                                                match = re.match(r'#/definitions/(\w+)', parser.specification['paths'][path][method]['responses'][status_code]['schema']['items']['$ref'])
                                                 # Does the object match the input from user?
                                                 if(match and match.group(1).lower() == parameters['object'].lower()):
                                                     operation['path'] = path
@@ -489,8 +469,7 @@ class BotView(APIView):
                                                     break
                                             # In case of a single item
                                             else:
-                                                match = re.match(
-                                                    r'#/definitions/(\w+)', responses[status_code]['schema']['$ref'])
+                                                match = re.match(r'#/definitions/(\w+)', parser.specification['paths'][path][method]['responses'][status_code]['schema']['$ref'])
                                                 # Does the object match the input from user?
                                                 if(match and match.group(1).lower() == parameters['object'].lower()):
                                                     operation['path'] = path
@@ -507,10 +486,10 @@ class BotView(APIView):
 
                         for operation in operations:
                             actions.append({
-                                'name': operation['value'],
-                                'text': operation['value'],
-                                'value': _('Explain {0} {1}').format(operation['type'], operation['value'] if operation['type'] == 'operation' else operation['path']),
-                            }
+                                    'name': operation['value'],
+                                    'text': operation['value'],
+                                    'value': _('Explain {0} {1}').format(operation['type'], operation['value'] if operation['type'] == 'operation' else operation['path']),
+                                }
                             )
 
                         attachments = {
@@ -534,8 +513,7 @@ class BotView(APIView):
                         output_data['data'] = data_response
 
                         # And display text
-                        output_data['displayText'] = '\n'.join(
-                            operation['value'] for operation in operations)
+                        output_data['displayText'] = '\n'.join(operation['value'] for operation in operations)
                     elif(definition):
                         output_data['displayText'] = _('Here is the object definition for *{0}*:\n{1}').format(
                             parameters['object'],
@@ -600,23 +578,27 @@ class BotView(APIView):
                 except Exception:
                     output_data['displayText'] = generic_error_msg
 
-            # TODO
-            # "securityDefinitions"
-            # "securityDefinitions":{
-            #    "petstore_auth":{
-            #       "type":"oauth2",
-            #       "authorizationUrl":"http://petstore.swagger.io/oauth/dialog",
-            #       "flow":"implicit",
-            #       "scopes":{
-            #          "write:pets":"modify pets in your account",
-            #          "read:pets":"read your pets"
-            #       }
-            #    },
-            #    "api_key":{
-            #       "type":"apiKey",
-            #       "name":"api_key",
-            #       "in":"header"
-            #    }
+
+# TODO
+# "securityDefinitions"
+   # "securityDefinitions":{
+   #    "petstore_auth":{
+   #       "type":"oauth2",
+   #       "authorizationUrl":"http://petstore.swagger.io/oauth/dialog",
+   #       "flow":"implicit",
+   #       "scopes":{
+   #          "write:pets":"modify pets in your account",
+   #          "read:pets":"read your pets"
+   #       }
+   #    },
+   #    "api_key":{
+   #       "type":"apiKey",
+   #       "name":"api_key",
+   #       "in":"header"
+   #    }
+
+
+
 
             # Fallback response
             ###################
