@@ -68,3 +68,4 @@ staticfiles/
 .cache/
 
 .vscode/
+compose/nginx/dhparams.pem
