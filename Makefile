@@ -24,3 +24,16 @@ lint: autoflake autopep8
 
 test: lint
 	DJANGO_SETTINGS_MODULE=config.settings.test python manage.py test
+
+build-local:
+	docker-compose -f local.yml build
+
+run-local:
+	docker-compose -f local.yml up
+
+build-production:
+	docker-compose -f production.yml build
+
+publish:
+	docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+	docker push "${TRAVIS_REPO_SLUG}":"${DOCKER_TAG}"
