@@ -1,3 +1,5 @@
+all: install-test test
+
 install-test:
 	pip install -r requirements/test.txt
 
