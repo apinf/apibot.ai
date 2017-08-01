@@ -6,6 +6,9 @@ install-test:
 install-local:
 	pip install -r requirements/local.txt
 
+collectstatic:
+	DJANGO_SETTINGS_MODULE=config.settings.local python manage.py collectstatic --no-input -c
+
 makemigrations:
 	DJANGO_SETTINGS_MODULE=config.settings.local python manage.py makemigrations
 
@@ -27,15 +30,18 @@ lint: autoflake autopep8
 test: lint
 	DJANGO_SETTINGS_MODULE=config.settings.test python manage.py test
 
-build-local:
+run-local:
+	DJANGO_SETTINGS_MODULE=config.settings.local python manage.py runserver
+
+build-local-image:
 	docker-compose -f local.yml build
 
-run-local:
+run-local-image:
 	docker-compose -f local.yml up
 
-build-production:
+build-production-image:
 	docker-compose -f production.yml build
 
-publish:
+publish-image:
 	docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
 	docker push "${TRAVIS_REPO_SLUG}":"${DOCKER_TAG}"
